@@ -1,5 +1,6 @@
 package gutsandgun.kite_result.controller;
 
+import gutsandgun.kite_result.dto.LogSendingDto;
 import gutsandgun.kite_result.dto.SendingDto;
 import gutsandgun.kite_result.dto.UsageDto;
 import gutsandgun.kite_result.service.ResultService;
@@ -26,5 +27,12 @@ public class ResultController {
 	public List<SendingDto> getTotalSending(){
 		List<SendingDto> sendingDtoList = resultService.getTotalSending();
 		return (sendingDtoList);
+	}
+
+	@GetMapping("/sending/result")
+	public List<LogSendingDto> getTotalSendingLog(){
+		List<LogSendingDto> sendingDtoList = resultService.getTotalSendingLog();
+
+		return sendingDtoList;
 	}
 }

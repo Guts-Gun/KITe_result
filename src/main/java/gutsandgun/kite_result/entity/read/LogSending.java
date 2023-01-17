@@ -43,6 +43,7 @@ public class LogSending {
 
     private Long completeTime;
 
+    private Long inputTime;
     private Long scheduleTime;
 
     private Boolean isDeleted = false;
