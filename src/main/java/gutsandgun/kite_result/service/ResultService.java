@@ -8,9 +8,11 @@ import gutsandgun.kite_result.entity.read.Sending;
 import gutsandgun.kite_result.repository.read.ReadLogSendingRepository;
 import gutsandgun.kite_result.repository.read.ReadSendingRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Map;
@@ -59,8 +61,8 @@ public class ResultService {
 
 	}
 
-	public List<LogSendingDto> getTotalSendingLog() {
-		List<LogSending>  logSendingList = readLogSendingRepository.findByUserId(findUser());
+	public List<LogSendingDto> getTotalSendingLog(Pageable pageable) {
+		List<LogSending>  logSendingList = readLogSendingRepository.findByUserIdOrderByInputTime(findUser(), pageable);
 		List<LogSendingDto>  logSendingDtoList = logSendingList.stream().map(logSending -> {
 			return new LogSendingDto(logSending);
 		} ).collect(Collectors.toList());

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @RestController
@@ -30,8 +31,8 @@ public class ResultController {
 	}
 
 	@GetMapping("/sending/result")
-	public List<LogSendingDto> getTotalSendingLog(){
-		List<LogSendingDto> sendingDtoList = resultService.getTotalSendingLog();
+	public List<LogSendingDto> getTotalSendingLog(Pageable pageable){
+		List<LogSendingDto> sendingDtoList = resultService.getTotalSendingLog(pageable);
 
 		return sendingDtoList;
 	}
