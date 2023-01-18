@@ -60,6 +60,7 @@ public class ResultService {
 	}
 
 	public List<LogSendingDto> getTotalSendingLog() {
+		//여기 종료후 로그에서만 읽어오는데 종료 안된거도 읽어오게 할지 고민하기
 		List<LogSending>  logSendingList = readLogSendingRepository.findByUserId(findUser());
 		List<LogSendingDto>  logSendingDtoList = logSendingList.stream().map(logSending -> {
 			return new LogSendingDto(logSending);
@@ -67,4 +68,13 @@ public class ResultService {
 		System.out.println(logSendingDtoList);
 		return logSendingDtoList;
 	}
+	public LogSendingDto getSendingLog(Long sendingId) {
+		//없을때 에러 어케 처리할지 정하기
+		LogSending logSending = readLogSendingRepository.findByUserIdAndSendingId(findUser(), sendingId);
+		LogSendingDto logSendingDto = new LogSendingDto(logSending);
+		System.out.println(logSendingDto);
+		return logSendingDto;
+	}
+
+
 }

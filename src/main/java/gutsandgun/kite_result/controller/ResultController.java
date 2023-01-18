@@ -6,6 +6,7 @@ import gutsandgun.kite_result.dto.UsageDto;
 import gutsandgun.kite_result.service.ResultService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,7 +33,12 @@ public class ResultController {
 	@GetMapping("/sending/result")
 	public List<LogSendingDto> getTotalSendingLog(){
 		List<LogSendingDto> sendingDtoList = resultService.getTotalSendingLog();
-
 		return sendingDtoList;
+	}
+
+	@GetMapping("/sending/result/{sendingId}")
+	public LogSendingDto getSendingLog(@PathVariable Long sendingId){
+		LogSendingDto logSendingDto = resultService.getSendingLog(sendingId);
+		return logSendingDto;
 	}
 }
