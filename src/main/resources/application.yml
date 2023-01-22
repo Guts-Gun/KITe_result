@@ -13,7 +13,7 @@ spring:
     open-in-view: false
     show-sql: true
     hibernate:
-      ddl-auto: create  # option type: create, create-drop, update, validate, none
+      ddl-auto: update  # option type: create, create-drop, update, validate, none
       naming:
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
 
