@@ -3,6 +3,7 @@ package gutsandgun.kite_result.entity.read;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
@@ -19,9 +20,17 @@ public class UserAddress {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "fk_user_id")
-    private Long userId;
+	/**
+	 * 주소록 주인 user id
+	 */
+	@Column(name = "fk_user_id")
+	@Comment("주소록 주인 user id")
+	private String userId;
 
+    /**
+     * 주소록 저장된 이름
+     */
+    @Comment("주소록 저장된 이름")
     private String name;
 
     private Boolean isDeleted = false;

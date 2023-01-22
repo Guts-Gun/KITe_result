@@ -3,6 +3,7 @@ package gutsandgun.kite_result.entity.read;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
@@ -18,15 +19,31 @@ public class SendingRule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
+   /**
+     * user id
+     */
     @Column(name = "fk_user_id")
-    private Long userId;
+    @Comment("user id")
+    private String userId;
 
-    @Column(name = "fk_sending_id")
-    private Long sendingId;
+	/**
+	 * sending id
+	 */
+	@Column(name = "fk_sending_id")
+	@Comment("sending id")
+	private Long sendingId;
 
+    /**
+     * 중계사 id
+     */
     @Column(name = "fk_broker_id")
+    @Comment("중계사 id")
     private Long brokerId;
 
+    /**
+     * 발송 비중
+     */
+    @Comment("발송 비중")
     private Long weight;
 
     private Boolean isDeleted = false;

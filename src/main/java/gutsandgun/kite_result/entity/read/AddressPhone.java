@@ -3,6 +3,7 @@ package gutsandgun.kite_result.entity.read;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
@@ -11,7 +12,6 @@ import org.hibernate.annotations.Where;
 @Setter
 @Where(clause = "is_deleted = false")
 @SQLDelete(sql= "UPDATE address_phone SET is_deleted=true WHERE id = ?")
-@Table(name="address_phone")
 public class AddressPhone {
 
     @Id
@@ -19,9 +19,17 @@ public class AddressPhone {
     @Column(name = "id")
     private Long id;
 
+    /**
+     * 주소록 ID
+     */
     @Column(name = "fk_user_address_id")
+    @Comment("주소록 ID")
     private String userAddressId;
 
+    /**
+     * 전화번호
+     */
+    @Comment("전화번호")
     private String phone;
 
     private Boolean isDeleted = false;
