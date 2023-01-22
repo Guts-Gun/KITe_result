@@ -1,18 +1,20 @@
 package gutsandgun.kite_result.service;
 
-import gutsandgun.kite_result.dto.LogSendingDto;
+import gutsandgun.kite_result.dto.ResultSendingDto;
 import gutsandgun.kite_result.dto.SendingDto;
 import gutsandgun.kite_result.dto.UsageDto;
-import gutsandgun.kite_result.entity.read.LogSending;
+import gutsandgun.kite_result.entity.read.ResultSending;
 import gutsandgun.kite_result.entity.read.Sending;
-import gutsandgun.kite_result.repository.read.ReadLogSendingRepository;
+import gutsandgun.kite_result.repository.read.ReadResultSendingRepository;
 import gutsandgun.kite_result.repository.read.ReadSendingRepository;
+import gutsandgun.kite_result.type.SendingType;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 
 import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Map;
@@ -24,24 +26,25 @@ import static java.util.Collections.emptyList;
 @AllArgsConstructor
 public class ResultService {
 	private final ReadSendingRepository readSendingRepository;
-	private final ReadLogSendingRepository readLogSendingRepository;
+	private final ReadResultSendingRepository readResultSendingRepository;
 
-	Long findUser() {
-		return (1L);
+	String findUser() {
+		return ("1");
 	}
+
 	public List<UsageDto> getTotalUsage() {
 
 		//여기 심각함 나중에 고치기
 		List<UsageDto> usageDtoList = new java.util.ArrayList<>(emptyList());
-		List<Sending> sendingList = readSendingRepository.findByUserId(1L);
+		List<Sending> sendingList = readSendingRepository.findByUserId(findUser());
 
-		Map<String, LongSummaryStatistics> testCollect = sendingList.stream()
-				.collect(Collectors.groupingBy(Sending::getSendingType, Collectors.summarizingLong(Sending::getTotalSending))
+		Map<SendingType, LongSummaryStatistics> testCollect = sendingList.stream()
+				.collect(Collectors.groupingBy(Sending::getSendingType, Collectors.summarizingLong(Sending::getTotalMessage))
 				);
 		System.out.println(testCollect.toString());
 
-		for (Map.Entry<String, LongSummaryStatistics> entry : testCollect.entrySet()) {
-			String s = entry.getKey();
+		for (Map.Entry<SendingType, LongSummaryStatistics> entry : testCollect.entrySet()) {
+			SendingType s = entry.getKey();
 			LongSummaryStatistics longSummaryStatistics = entry.getValue();
 			usageDtoList.add(new UsageDto(s, 1000L, longSummaryStatistics.getSum()));
 		}
@@ -51,7 +54,7 @@ public class ResultService {
 
 
 	public List<SendingDto> getTotalSending() {
-		List<Sending> sendingList = readSendingRepository.findByUserId(1L);
+		List<Sending> sendingList = readSendingRepository.findByUserId(findUser());
 		List<SendingDto> sendingDtoList = sendingList.stream().map(sending -> {
 			return new SendingDto(sending);
 		}).collect(Collectors.toList());
@@ -61,12 +64,10 @@ public class ResultService {
 
 	}
 
-	public List<LogSendingDto> getTotalSendingLog(Pageable pageable) {
-		List<LogSending>  logSendingList = readLogSendingRepository.findByUserIdOrderByInputTime(findUser(), pageable);
-		List<LogSendingDto>  logSendingDtoList = logSendingList.stream().map(logSending -> {
-			return new LogSendingDto(logSending);
-		} ).collect(Collectors.toList());
-		System.out.println(logSendingDtoList);
-		return logSendingDtoList;
+	public Page<ResultSendingDto> getTotalResultSending(Pageable pageable) {
+		Page<ResultSending> resultSendingPage = readResultSendingRepository.findByUserId(findUser(), pageable);
+		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(ResultSendingDto::toDto);
+		System.out.println(resultSendingDtoList);
+		return resultSendingDtoList;
 	}
 }

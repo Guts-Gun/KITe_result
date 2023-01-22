@@ -3,6 +3,7 @@ package gutsandgun.kite_result.entity.read;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
@@ -10,19 +11,27 @@ import org.hibernate.annotations.Where;
 @Getter
 @Setter
 @Where(clause = "is_deleted = false")
-@SQLDelete(sql= "UPDATE sending_schedule SET is_deleted=true WHERE id = ?")
-@Table(name="sending_schedule")
+@SQLDelete(sql = "UPDATE sending_schedule SET is_deleted=true WHERE id = ?")
+@Table(name = "sending_schedule")
 public class SendingSchedule {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id")
+	private Long id;
 
-    @Column(name = "fk_sending_id")
-    private Long sendingId;
+	/**
+	 * sending id
+	 */
+	@Column(name = "fk_sending_id")
+	@Comment("sending id")
+	private Long sendingId;
 
-    private Long time;
+	/**
+	 * 예약 시간 unix time
+	 */
+	@Comment("예약 시간")
+	private Long time;
 
-    private Boolean isDeleted = false;
+	private Boolean isDeleted = false;
 }

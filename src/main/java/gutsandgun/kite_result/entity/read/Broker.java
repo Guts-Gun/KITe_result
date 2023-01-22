@@ -3,6 +3,7 @@ package gutsandgun.kite_result.entity.read;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
@@ -11,7 +12,6 @@ import org.hibernate.annotations.Where;
 @Setter
 @Where(clause = "is_deleted = false")
 @SQLDelete(sql= "UPDATE broker SET is_deleted=true WHERE id = ?")
-@Table(name="broker")
 public class Broker {
 
     @Id
@@ -19,14 +19,30 @@ public class Broker {
     @Column(name = "id")
     private Long id;
 
+    /**
+     * 중계사 이름
+     */
+    @Comment("중계사 이름")
     private String name;
-
+    
+    /**
+     * 중계사 ip
+     */
+    @Comment("중계사 ip")
     private String ip;
 
+    /**
+     * 중계사 가격
+     */
+    @Comment("중계사 가격")
     private Float price;
 
     private Float speed;
 
+        /**
+     * 중계사 실패율
+     */
+    @Comment("중계사 실패율")
     private Float failureRate;
 
     private Boolean isDeleted = false;

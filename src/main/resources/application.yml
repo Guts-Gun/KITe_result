@@ -9,19 +9,21 @@ spring:
     hikari:
       maximum-pool-size: 10
   jpa:
+    generate-ddl: true
+    open-in-view: false
+    show-sql: true
     hibernate:
-      ddl-auto: update  # option type: create, create-drop, update, validate, none
+      ddl-auto: create  # option type: create, create-drop, update, validate, none
       naming:
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
 
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL57Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
         storage_engine: innodb
         format_sql: true
-        show-sql: true
-        generate-ddl: true
-    open-in-view: false
+        show_sql: true
+
 logging:
   level:
     org:

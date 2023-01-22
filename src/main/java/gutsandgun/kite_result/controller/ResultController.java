@@ -1,10 +1,11 @@
 package gutsandgun.kite_result.controller;
 
-import gutsandgun.kite_result.dto.LogSendingDto;
+import gutsandgun.kite_result.dto.ResultSendingDto;
 import gutsandgun.kite_result.dto.SendingDto;
 import gutsandgun.kite_result.dto.UsageDto;
 import gutsandgun.kite_result.service.ResultService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,9 +32,7 @@ public class ResultController {
 	}
 
 	@GetMapping("/sending/result")
-	public List<LogSendingDto> getTotalSendingLog(Pageable pageable){
-		List<LogSendingDto> sendingDtoList = resultService.getTotalSendingLog(pageable);
-
-		return sendingDtoList;
+	public Page<ResultSendingDto> getTotalResultSending(Pageable pageable){
+		return resultService.getTotalResultSending(pageable);
 	}
 }

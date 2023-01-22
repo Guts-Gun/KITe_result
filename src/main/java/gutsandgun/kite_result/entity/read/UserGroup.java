@@ -3,6 +3,7 @@ package gutsandgun.kite_result.entity.read;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
@@ -19,9 +20,17 @@ public class UserGroup {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "fk_user_id")
-    private Long userId;
+	/**
+	 * user id
+	 */
+	@Column(name = "fk_user_id")
+	@Comment("user id")
+	private String userId;
 
+    /**
+     * 그룹 이름
+     */
+    @Comment("그룹 이름")
     private String groupName;
 
     private Boolean isDeleted = false;

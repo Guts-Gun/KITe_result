@@ -3,6 +3,7 @@ package gutsandgun.kite_result.entity.read;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
@@ -19,17 +20,48 @@ public class SendingMsg {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "fk_sending_id")
-    private Long sendingId;
+	/**
+	 * sending id
+	 */
+	@Column(name = "fk_sending_id")
+	@Comment("sending id")
+	private Long sendingId;
 
-    private String sender;
+	/**
+	 * 발신자 주소
+	 */
+	@Comment("발신자 주소")
+	private String sender;
 
-    private String receiver;
+	/**
+	 * 수신자 주소
+	 */
+	@Comment("수신자 주소")
+	private String receiver;
 
-    private String name;
-    private String var1;
-    private String var2;
-    private String var3;
+	/**
+	 * 사용자지정 변수 - 이름
+	 */
+	@Comment("사용자지정 변수 - 이름")
+	private String name;
+
+	/**
+	 * 사용자지정 변수 - 1번
+	 */
+	@Comment("사용자지정 변수 - 1번")
+	private String var1;
+
+	/**
+	 * 사용자지정 변수 - 2번
+	 */
+	@Comment("사용자지정 변수 - 2번")
+	private String var2;
+
+	/**
+	 * 사용자지정 변수 - 2번
+	 */
+	@Comment("사용자지정 변수 - 2번")
+	private String var3;
 
 
     private Boolean isDeleted = false;
