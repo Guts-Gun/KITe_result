@@ -3,6 +3,7 @@ package gutsandgun.kite_result.entity.read;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -40,5 +41,6 @@ public class SendingBlock {
 	@Comment("차단 시간")
 	private Long blockTime;
 
+	@ColumnDefault("false")
 	private Boolean isDeleted = false;
 }

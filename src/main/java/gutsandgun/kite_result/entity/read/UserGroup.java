@@ -3,6 +3,7 @@ package gutsandgun.kite_result.entity.read;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -33,5 +34,6 @@ public class UserGroup {
     @Comment("그룹 이름")
     private String groupName;
 
+	@ColumnDefault("false")
     private Boolean isDeleted = false;
 }

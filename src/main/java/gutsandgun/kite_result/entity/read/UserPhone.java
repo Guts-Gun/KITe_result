@@ -3,6 +3,7 @@ package gutsandgun.kite_result.entity.read;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -36,5 +37,6 @@ public class UserPhone {
 	@Comment("발신 전화번호")
 	private String phone;
 
+	@ColumnDefault("false")
 	private Boolean isDeleted = false;
 }

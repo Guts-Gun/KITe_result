@@ -3,6 +3,7 @@ package gutsandgun.kite_result.entity.read;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -11,14 +12,14 @@ import org.hibernate.annotations.Where;
 @Getter
 @Setter
 @Where(clause = "is_deleted = false")
-@SQLDelete(sql= "UPDATE sending_msg SET is_deleted=true WHERE id = ?")
-@Table(name="sending_msg")
+@SQLDelete(sql = "UPDATE sending_msg SET is_deleted=true WHERE id = ?")
+@Table(name = "sending_msg")
 public class SendingMsg {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id")
+	private Long id;
 
 	/**
 	 * sending id
@@ -64,5 +65,6 @@ public class SendingMsg {
 	private String var3;
 
 
-    private Boolean isDeleted = false;
+	@ColumnDefault("false")
+	private Boolean isDeleted = false;
 }

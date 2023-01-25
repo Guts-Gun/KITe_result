@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -33,5 +34,6 @@ public class User {
     @Comment("e-mail")
     private String email;
 
+    @ColumnDefault("false")
     private Boolean isDeleted = false;
 }

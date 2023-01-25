@@ -1,11 +1,12 @@
 package gutsandgun.kite_result.entity.read;
 
-
 import gutsandgun.kite_result.type.SendingRuleType;
+import gutsandgun.kite_result.type.SendingStatus;
 import gutsandgun.kite_result.type.SendingType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -45,12 +46,17 @@ public class ResultSending {
 	@Comment("발송 메시지 타입")
 	private SendingType sendingType;
 
-
 	/**
 	 * 분배 규칙 타입
 	 */
 	@Comment("분배 규칙 타입")
 	private SendingRuleType sendingRuleType;
+
+	/**
+	 * 발송 상태
+	 */
+	@Comment("발송 상태")
+	private SendingStatus sendingStatus;
 
 	/**
 	 * 성공 여부
@@ -75,8 +81,6 @@ public class ResultSending {
 	 */
 	@Comment("평군 속도")
 	private Float avgSpeed;
-
-
 
 
 	// 시간 관련 로그
@@ -110,6 +114,6 @@ public class ResultSending {
 	@Comment("결과 기록 시간")
 	private Long logTime;
 
+	@ColumnDefault("false")
 	private Boolean isDeleted = false;
 }
-

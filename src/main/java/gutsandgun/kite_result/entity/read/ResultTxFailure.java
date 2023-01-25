@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -92,6 +93,6 @@ public class ResultTxFailure {
 	@Comment("메시지 내용")
 	private String content;
 
-
+    @ColumnDefault("false")
 	private Boolean isDeleted = false;
 }
