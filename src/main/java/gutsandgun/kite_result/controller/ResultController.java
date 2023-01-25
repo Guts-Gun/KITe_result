@@ -1,8 +1,6 @@
 package gutsandgun.kite_result.controller;
 
-import gutsandgun.kite_result.dto.ResultSendingDto;
-import gutsandgun.kite_result.dto.SendingDto;
-import gutsandgun.kite_result.dto.UsageDto;
+import gutsandgun.kite_result.dto.*;
 import gutsandgun.kite_result.service.ResultService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,8 +36,20 @@ public class ResultController {
 	}
 
 	@GetMapping("/sending/result/{sendingId}")
-	public LogSendingDto getSendingLog(@PathVariable Long sendingId){
-		LogSendingDto logSendingDto = resultService.getSendingLog(sendingId);
-		return logSendingDto;
+	public ResultSendingDto getResultSending(@PathVariable Long sendingId){
+		ResultSendingDto resultSendingDto = resultService.getResultSending(sendingId);
+		return resultSendingDto;
 	}
+
+	@GetMapping("/sending/result/{sendingId}/broker")
+	public ResultBrokerDto getResultSendingBroker(@PathVariable Long sendingId) {
+		ResultBrokerDto resultBrokerDto = resultService.getResultSendingBroker(sendingId);
+		return resultBrokerDto;
+	}
+
+	@GetMapping("/sending/result/{sendingId}/tx")
+	public Page<ResultTxDto> getResultSendingTx(Pageable pageable, @PathVariable Long sendingId) {
+		return resultService.getResultSendingTx(pageable, sendingId);
+	}
+
 }

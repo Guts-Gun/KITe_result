@@ -1,12 +1,15 @@
 package gutsandgun.kite_result.service;
 
-import gutsandgun.kite_result.dto.ResultSendingDto;
-import gutsandgun.kite_result.dto.SendingDto;
-import gutsandgun.kite_result.dto.UsageDto;
+import gutsandgun.kite_result.dto.*;
+import gutsandgun.kite_result.entity.read.Broker;
 import gutsandgun.kite_result.entity.read.ResultSending;
+import gutsandgun.kite_result.entity.read.ResultTx;
 import gutsandgun.kite_result.entity.read.Sending;
+import gutsandgun.kite_result.repository.read.ReadBrokerRepository;
 import gutsandgun.kite_result.repository.read.ReadResultSendingRepository;
+import gutsandgun.kite_result.repository.read.ReadResultTxRepository;
 import gutsandgun.kite_result.repository.read.ReadSendingRepository;
+import gutsandgun.kite_result.type.FailReason;
 import gutsandgun.kite_result.type.SendingType;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
@@ -27,9 +31,15 @@ import static java.util.Collections.emptyList;
 public class ResultService {
 	private final ReadSendingRepository readSendingRepository;
 	private final ReadResultSendingRepository readResultSendingRepository;
+	private final ReadResultTxRepository readResultTxRepository;
+	private final ReadBrokerRepository readBrokerRepository;
+
 
 	String findUser() {
 		return ("1");
+	}
+	Long findResultSendingId(Long sendingId){
+		return readResultSendingRepository.findBySendingId(sendingId).getId();
 	}
 
 	public List<UsageDto> getTotalUsage() {
@@ -70,13 +80,48 @@ public class ResultService {
 		System.out.println(resultSendingDtoList);
 		return resultSendingDtoList;
 	}
-	public LogSendingDto getSendingLog(Long sendingId) {
+
+	public ResultSendingDto getResultSending(Long sendingId) {
 		//없을때 에러 어케 처리할지 정하기
-		LogSending logSending = readLogSendingRepository.findByUserIdAndSendingId(findUser(), sendingId);
-		LogSendingDto logSendingDto = new LogSendingDto(logSending);
-		System.out.println(logSendingDto);
-		return logSendingDto;
+		ResultSending resultSending = readResultSendingRepository.findByUserIdAndSendingId(findUser(), sendingId);
+		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(resultSending);
+		System.out.println(resultSendingDto);
+		return resultSendingDto;
 	}
 
 
+	public ResultBrokerDto getResultSendingBroker(Long sendingId) {
+		ResultSending resultSending = readResultSendingRepository.findByUserIdAndSendingId(findUser(), sendingId);
+		List<ResultTx> resultTxList = readResultTxRepository.findByResultSendingId(resultSending.getId());
+		Map<String, Long> brokerCount;
+		Map<String, Map<Boolean, Long>> brokerSuccessFail;
+		Map<String, LongSummaryStatistics> brokerSpeed;
+
+		Map<Long, Broker> brokerMap = readBrokerRepository.findAllMap();
+		System.out.println(brokerMap);
+
+
+		brokerCount = resultTxList.stream()
+				.collect(Collectors.groupingBy(ResultTx -> brokerMap.get(ResultTx.getBrokerId()).getName(), Collectors.counting()));
+
+		//tf 둘중 하나없으면 0으로 나오게 추가하기
+		brokerSuccessFail = resultTxList.stream()
+				.collect(Collectors.groupingBy(ResultTx -> brokerMap.get(ResultTx.getBrokerId()).getName(),
+						Collectors.groupingBy(ResultTx::getSuccess, Collectors.counting())));
+
+
+		brokerSpeed = resultTxList.stream()
+				.collect(Collectors.groupingBy(ResultTx -> brokerMap.get(ResultTx.getBrokerId()).getName(),
+						Collectors.summarizingLong(ResultTx -> ResultTx.getCompleteTime() - ResultTx.getSendTime())));
+
+		ResultBrokerDto resultBrokerDto = new ResultBrokerDto(sendingId, brokerCount, brokerSuccessFail,brokerSpeed);
+
+		return resultBrokerDto;
+	}
+
+	public Page<ResultTxDto> getResultSendingTx(Pageable pageable, Long sendingId) {
+		Page<ResultTx> resultTxPage = readResultTxRepository.findByUserIdAndResultSendingId(findUser(), findResultSendingId(sendingId), pageable);
+		Page<ResultTxDto> resultTxDtoPage = resultTxPage.map(ResultTxDto::toDto);
+		return resultTxDtoPage;
+	}
 }
