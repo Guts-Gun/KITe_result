@@ -53,14 +53,6 @@ public class ResultTx {
 
 
 	/**
-	 * 이거 머임 알려주셈
-	 */
-	@Column(name = "fk_sending_x_id")
-	@Comment("")
-	private Long sendingXId;
-
-
-	/**
 	 * 발송 메시지 타입
 	 */
 	@Comment("발송 메시지 타입")
@@ -145,6 +137,6 @@ public class ResultTx {
 	@Comment("결과 기록 시간")
 	private Long logTime;
 
-    @ColumnDefault("false")
+	@ColumnDefault("false")
 	private Boolean isDeleted = false;
 }

@@ -36,9 +36,10 @@ public class ResultService {
 
 
 	String findUser() {
-		return ("1");
+		return ("solbitest");
 	}
-	Long findResultSendingId(Long sendingId){
+
+	Long findResultSendingId(Long sendingId) {
 		return readResultSendingRepository.findBySendingId(sendingId).getId();
 	}
 
@@ -109,12 +110,28 @@ public class ResultService {
 				.collect(Collectors.groupingBy(ResultTx -> brokerMap.get(ResultTx.getBrokerId()).getName(),
 						Collectors.groupingBy(ResultTx::getSuccess, Collectors.counting())));
 
+		//여기도 진짜 심각함
+		List<String> tempName = new java.util.ArrayList<>();
+		List<Long> tempData = new java.util.ArrayList<>();
+		for (String key : brokerSuccessFail.keySet())
+		{
+			System.out.println(key);
+			for (Boolean key2 : brokerSuccessFail.get(key).keySet())
+			{
+				System.out.println(key2);
+				tempName.add(key + "-" + key2.toString());
+				tempData.add(brokerSuccessFail.get(key).get(key2));
+			}
+		}
+
+		NameDateListDto temp = new NameDateListDto(tempName, tempData);
+
 
 		brokerSpeed = resultTxList.stream()
 				.collect(Collectors.groupingBy(ResultTx -> brokerMap.get(ResultTx.getBrokerId()).getName(),
 						Collectors.summarizingLong(ResultTx -> ResultTx.getCompleteTime() - ResultTx.getSendTime())));
 
-		ResultBrokerDto resultBrokerDto = new ResultBrokerDto(sendingId, brokerCount, brokerSuccessFail,brokerSpeed);
+		ResultBrokerDto resultBrokerDto = new ResultBrokerDto(sendingId, brokerCount, temp, brokerSpeed);
 
 		return resultBrokerDto;
 	}

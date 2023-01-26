@@ -32,7 +32,7 @@ public class SendingDto implements Serializable {
 		this.inputTime = sending.getInputTime();
 		this.scheduleTime = sending.getScheduleTime();
 		this.title = sending.getTitle();
-		this.media_link = sending.getMedia_link();
+		this.media_link = sending.getMediaLink();
 		this.content = sending.getContent();
 	}
 }

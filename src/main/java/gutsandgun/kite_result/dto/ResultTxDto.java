@@ -19,7 +19,6 @@ public class ResultTxDto implements Serializable {
 	private final Long resultSendingId;
 	private final Long txId;
 	private final Long brokerId;
-	private final Long sendingXId;
 	private final SendingType sendingType;
 	private final String sender;
 	private final String receiver;
@@ -41,7 +40,6 @@ public class ResultTxDto implements Serializable {
 				.resultSendingId(resultTx.getResultSendingId())
 				.txId(resultTx.getTxId())
 				.brokerId(resultTx.getBrokerId())
-				.sendingXId(resultTx.getSendingXId())
 				.sendingType(resultTx.getSendingType())
 				.sender(resultTx.getSender())
 				.receiver(resultTx.getReceiver())

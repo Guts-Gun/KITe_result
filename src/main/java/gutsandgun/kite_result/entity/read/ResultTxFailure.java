@@ -93,6 +93,6 @@ public class ResultTxFailure {
 	@Comment("메시지 내용")
 	private String content;
 
-    @ColumnDefault("false")
+	@ColumnDefault("false")
 	private Boolean isDeleted = false;
 }

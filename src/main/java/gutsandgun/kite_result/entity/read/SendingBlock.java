@@ -41,6 +41,6 @@ public class SendingBlock {
 	@Comment("차단 시간")
 	private Long blockTime;
 
-	@ColumnDefault("false")
+	    @ColumnDefault("false")
 	private Boolean isDeleted = false;
 }

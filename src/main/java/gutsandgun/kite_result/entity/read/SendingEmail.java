@@ -67,6 +67,6 @@ public class SendingEmail {
 	private String var3;
 
 
-	@ColumnDefault("false")
+	    @ColumnDefault("false")
 	private Boolean isDeleted = false;
 }
