@@ -9,19 +9,17 @@ import gutsandgun.kite_result.repository.read.ReadBrokerRepository;
 import gutsandgun.kite_result.repository.read.ReadResultSendingRepository;
 import gutsandgun.kite_result.repository.read.ReadResultTxRepository;
 import gutsandgun.kite_result.repository.read.ReadSendingRepository;
-import gutsandgun.kite_result.type.FailReason;
 import gutsandgun.kite_result.type.SendingType;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-
-import org.springframework.data.domain.Pageable;
-
+import java.security.Principal;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
@@ -35,7 +33,11 @@ public class ResultService {
 	private final ReadBrokerRepository readBrokerRepository;
 
 
-	String findUser() {
+	String findUser(Principal principal) {
+		JwtAuthenticationToken token = (JwtAuthenticationToken) principal;
+		String userId = token.getTokenAttributes().get("preferred_username").toString();
+		// 여긴 나중에
+//		return(userId);
 		return ("solbitest");
 	}
 
@@ -43,11 +45,12 @@ public class ResultService {
 		return readResultSendingRepository.findBySendingId(sendingId).getId();
 	}
 
-	public List<UsageDto> getTotalUsage() {
+	public List<UsageDto> getTotalUsage(Principal principal) {
+		List<Sending> sendingList = readSendingRepository.findByUserId(findUser(principal));
 
 		//여기 심각함 나중에 고치기
 		List<UsageDto> usageDtoList = new java.util.ArrayList<>(emptyList());
-		List<Sending> sendingList = readSendingRepository.findByUserId(findUser());
+
 
 		Map<SendingType, LongSummaryStatistics> testCollect = sendingList.stream()
 				.collect(Collectors.groupingBy(Sending::getSendingType, Collectors.summarizingLong(Sending::getTotalMessage))
@@ -64,8 +67,8 @@ public class ResultService {
 	}
 
 
-	public List<SendingDto> getTotalSending() {
-		List<Sending> sendingList = readSendingRepository.findByUserId(findUser());
+	public List<SendingDto> getTotalSending(Principal principal) {
+		List<Sending> sendingList = readSendingRepository.findByUserId(findUser(principal));
 		List<SendingDto> sendingDtoList = sendingList.stream().map(sending -> {
 			return new SendingDto(sending);
 		}).collect(Collectors.toList());
@@ -75,24 +78,24 @@ public class ResultService {
 
 	}
 
-	public Page<ResultSendingDto> getTotalResultSending(Pageable pageable) {
-		Page<ResultSending> resultSendingPage = readResultSendingRepository.findByUserId(findUser(), pageable);
+	public Page<ResultSendingDto> getTotalResultSending(Principal principal, Pageable pageable) {
+		Page<ResultSending> resultSendingPage = readResultSendingRepository.findByUserId(findUser(principal), pageable);
 		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(ResultSendingDto::toDto);
 		System.out.println(resultSendingDtoList);
 		return resultSendingDtoList;
 	}
 
-	public ResultSendingDto getResultSending(Long sendingId) {
+	public ResultSendingDto getResultSending(Principal principal, Long sendingId) {
 		//없을때 에러 어케 처리할지 정하기
-		ResultSending resultSending = readResultSendingRepository.findByUserIdAndSendingId(findUser(), sendingId);
+		ResultSending resultSending = readResultSendingRepository.findByUserIdAndSendingId(findUser(principal), sendingId);
 		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(resultSending);
 		System.out.println(resultSendingDto);
 		return resultSendingDto;
 	}
 
 
-	public ResultBrokerDto getResultSendingBroker(Long sendingId) {
-		ResultSending resultSending = readResultSendingRepository.findByUserIdAndSendingId(findUser(), sendingId);
+	public ResultBrokerDto getResultSendingBroker(Principal principal, Long sendingId) {
+		ResultSending resultSending = readResultSendingRepository.findByUserIdAndSendingId(findUser(principal), sendingId);
 		List<ResultTx> resultTxList = readResultTxRepository.findByResultSendingId(resultSending.getId());
 		Map<String, Long> brokerCount;
 		Map<String, Map<Boolean, Long>> brokerSuccessFail;
@@ -113,11 +116,9 @@ public class ResultService {
 		//여기도 진짜 심각함
 		List<String> tempName = new java.util.ArrayList<>();
 		List<Long> tempData = new java.util.ArrayList<>();
-		for (String key : brokerSuccessFail.keySet())
-		{
+		for (String key : brokerSuccessFail.keySet()) {
 			System.out.println(key);
-			for (Boolean key2 : brokerSuccessFail.get(key).keySet())
-			{
+			for (Boolean key2 : brokerSuccessFail.get(key).keySet()) {
 				System.out.println(key2);
 				tempName.add(key + "-" + key2.toString());
 				tempData.add(brokerSuccessFail.get(key).get(key2));
@@ -136,8 +137,8 @@ public class ResultService {
 		return resultBrokerDto;
 	}
 
-	public Page<ResultTxDto> getResultSendingTx(Pageable pageable, Long sendingId) {
-		Page<ResultTx> resultTxPage = readResultTxRepository.findByUserIdAndResultSendingId(findUser(), findResultSendingId(sendingId), pageable);
+	public Page<ResultTxDto> getResultSendingTx(Principal principal, Pageable pageable, Long sendingId) {
+		Page<ResultTx> resultTxPage = readResultTxRepository.findByUserIdAndResultSendingId(findUser(principal), findResultSendingId(sendingId), pageable);
 		Page<ResultTxDto> resultTxDtoPage = resultTxPage.map(ResultTxDto::toDto);
 		return resultTxDtoPage;
 	}

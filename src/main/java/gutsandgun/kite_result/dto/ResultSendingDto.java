@@ -2,6 +2,7 @@ package gutsandgun.kite_result.dto;
 
 import gutsandgun.kite_result.entity.read.ResultSending;
 import gutsandgun.kite_result.type.SendingRuleType;
+import gutsandgun.kite_result.type.SendingStatus;
 import gutsandgun.kite_result.type.SendingType;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +30,7 @@ public class ResultSendingDto implements Serializable {
 	private final Long startTime;
 	private final Long completeTime;
 	private final Long logTime;
+	private final SendingStatus sendingStatus;
 
 	public static ResultSendingDto toDto(final ResultSending resultSending) {
 		return ResultSendingDto.builder()

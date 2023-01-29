@@ -16,6 +16,11 @@ spring:
       ddl-auto: update  # option type: create, create-drop, update, validate, none
       naming:
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: https://gutsandgun.kro.kr:10006/realms/KITe/protocol/openid-connect/certs
 
     properties:
       hibernate:
@@ -31,3 +36,11 @@ logging:
         type:
           descriptor:
             sql: trace # query의 ?에 어떤 값이 들어가는지 TRACE Log에 값을 보여줌
+keycloak:
+  realm: KITe
+  bearer-only: true
+  ssl-required: external
+  resource: spring_auth
+  auth-server-url: https://gutsandgun.kro.kr:10006
+  credentials:
+    secret: 0U1wVFCEHbzhhyPzWvDkQUnVfZFht7VE
