@@ -34,8 +34,9 @@ public class ResultService {
 
 
 	String findUser(Principal principal) {
-		JwtAuthenticationToken token = (JwtAuthenticationToken) principal;
-		String userId = token.getTokenAttributes().get("preferred_username").toString();
+//		JwtAuthenticationToken token = (JwtAuthenticationToken) principal;
+//		String userId = token.getTokenAttributes().get("preferred_username").toString();
+//		System.out.println(userId);
 		// 여긴 나중에
 //		return(userId);
 		return ("solbitest");

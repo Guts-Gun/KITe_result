@@ -1,5 +1,6 @@
 package gutsandgun.kite_result.entity.read;
 
+import gutsandgun.kite_result.entity.BaseTimeEntity;
 import gutsandgun.kite_result.type.FailReason;
 import gutsandgun.kite_result.type.SendingType;
 import jakarta.persistence.Column;
@@ -17,7 +18,7 @@ import org.hibernate.annotations.Where;
 @Setter
 @Where(clause = "is_deleted = false")
 @SQLDelete(sql = "UPDATE result_tx_failure SET is_deleted=true WHERE id = ?")
-public class ResultTxFailure {
+public class ResultTxFailure extends BaseTimeEntity {
 
 	/**
 	 * result tx id 1대 1 대응
@@ -56,12 +57,6 @@ public class ResultTxFailure {
 	@Column(name = "fk_broker_id")
 	private Long brokerId;
 
-	/**
-	 * 이거 머임 알려주셈
-	 */
-	@Comment("")
-	@Column(name = "fk_sending_x_id")
-	private Long sendingXId;
 
 	/**
 	 * 발송 메시지 타입
@@ -85,7 +80,7 @@ public class ResultTxFailure {
 	 * 미디어 호스팅 주소
 	 */
 	@Comment("미디어 호스팅 주소")
-	private String media_link;
+	private String mediaLink;
 
 	/**
 	 * 메시지 내용

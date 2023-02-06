@@ -23,7 +23,7 @@ public class ResultSendingDto implements Serializable {
 	private final Boolean success;
 	private final Long totalMessage;
 	private final Long failedMessage;
-	private final Float avgSpeed;
+	private final Float avgLatency;
 
 	private final Long inputTime;
 	private final Long scheduleTime;
@@ -42,7 +42,7 @@ public class ResultSendingDto implements Serializable {
 				.success(resultSending.getSuccess())
 				.totalMessage(resultSending.getTotalMessage())
 				.failedMessage(resultSending.getFailedMessage())
-				.avgSpeed(resultSending.getAvgSpeed())
+				.avgLatency(resultSending.getAvgLatency())
 				.inputTime(resultSending.getInputTime())
 				.scheduleTime(resultSending.getScheduleTime())
 				.startTime(resultSending.getStartTime())
