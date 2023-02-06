@@ -25,7 +25,7 @@ public class ResultTxDto implements Serializable {
 	private final Boolean success;
 	private final FailReason failReason;
 	private final String title;
-	private final String media_link;
+	private final String mediaLink;
 	private final String content;
 	private final Long inputTime;
 	private final Long scheduleTime;
@@ -46,7 +46,7 @@ public class ResultTxDto implements Serializable {
 				.success(resultTx.getSuccess())
 				.failReason(resultTx.getFailReason())
 				.title(resultTx.getTitle())
-				.media_link(resultTx.getMedia_link())
+				.mediaLink(resultTx.getMediaLink())
 				.content(resultTx.getContent())
 				.inputTime(resultTx.getInputTime())
 				.completeTime(resultTx.getCompleteTime())

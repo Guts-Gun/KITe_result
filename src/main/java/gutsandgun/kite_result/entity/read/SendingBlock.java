@@ -1,5 +1,6 @@
 package gutsandgun.kite_result.entity.read;
 
+import gutsandgun.kite_result.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +17,7 @@ import org.hibernate.annotations.Where;
 @Setter
 @Where(clause = "is_deleted = false")
 @SQLDelete(sql = "UPDATE sending_block SET is_deleted=true WHERE id = ?")
-public class SendingBlock {
+public class SendingBlock extends BaseTimeEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,6 +42,6 @@ public class SendingBlock {
 	@Comment("차단 시간")
 	private Long blockTime;
 
-	    @ColumnDefault("false")
+	@ColumnDefault("false")
 	private Boolean isDeleted = false;
 }

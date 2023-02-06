@@ -1,5 +1,6 @@
 package gutsandgun.kite_result.entity.read;
 
+import gutsandgun.kite_result.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Comment;
@@ -13,7 +14,7 @@ import org.hibernate.annotations.Comment;
 //@Where(clause = "is_deleted = false")
 //@SQLDelete(sql= "UPDATE sending_msg SET is_deleted=true WHERE id = ?")
 @Table(name = "send_replace")
-public class SendReplace {
+public class SendReplace extends BaseTimeEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,6 +31,6 @@ public class SendReplace {
 
 	@Comment("수정자")
 	@Column(name = "mod_id", length = 20)
-	private String ModId;
+	private String modId;
 
 }

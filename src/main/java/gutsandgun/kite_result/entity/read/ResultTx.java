@@ -1,5 +1,6 @@
 package gutsandgun.kite_result.entity.read;
 
+import gutsandgun.kite_result.entity.BaseTimeEntity;
 import gutsandgun.kite_result.type.FailReason;
 import gutsandgun.kite_result.type.SendingType;
 import jakarta.persistence.*;
@@ -15,7 +16,7 @@ import org.hibernate.annotations.Where;
 @Setter
 @Where(clause = "is_deleted = false")
 @SQLDelete(sql = "UPDATE result_tx SET is_deleted=true WHERE id = ?")
-public class ResultTx {
+public class ResultTx extends BaseTimeEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -92,7 +93,7 @@ public class ResultTx {
 	 * 미디어 호스팅 주소
 	 */
 	@Comment("미디어 호스팅 주소")
-	private String media_link;
+	private String mediaLink;
 
 	/**
 	 * 메시지 내용

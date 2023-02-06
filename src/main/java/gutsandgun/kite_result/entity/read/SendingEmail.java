@@ -1,5 +1,6 @@
 package gutsandgun.kite_result.entity.read;
 
+import gutsandgun.kite_result.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +17,7 @@ import org.hibernate.annotations.Where;
 @Setter
 @Where(clause = "is_deleted = false")
 @SQLDelete(sql = "UPDATE sending_email SET is_deleted=true WHERE id = ?")
-public class SendingEmail {
+public class SendingEmail extends BaseTimeEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,6 +68,6 @@ public class SendingEmail {
 	private String var3;
 
 
-	    @ColumnDefault("false")
+	@ColumnDefault("false")
 	private Boolean isDeleted = false;
 }

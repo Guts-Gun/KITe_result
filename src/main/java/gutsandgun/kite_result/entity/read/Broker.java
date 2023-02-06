@@ -1,5 +1,6 @@
 package gutsandgun.kite_result.entity.read;
 
+import gutsandgun.kite_result.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +14,7 @@ import org.hibernate.annotations.Where;
 @Setter
 @Where(clause = "is_deleted = false")
 @SQLDelete(sql = "UPDATE broker SET is_deleted=true WHERE id = ?")
-public class Broker {
+public class Broker extends BaseTimeEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,16 +34,24 @@ public class Broker {
 	private String ip;
 
 	/**
+	 * 중계사 컬러 hex
+	 */
+	@Comment("중계사 색")
+	@ColumnDefault("FF0000")
+	private String color = "#FF0000";
+
+
+	/**
 	 * 중계사 가격
 	 */
 	@Comment("중계사 가격")
 	private Float price;
 
 	/**
-	 * 중계사 속도
+	 * 중계사 응답속도
 	 */
-	@Comment("중계사 속도")
-	private Float speed;
+	@Comment("중계사 응답속도")
+	private Float latency;
 
 	/**
 	 * 중계사 실패율
