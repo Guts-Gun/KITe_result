@@ -1,6 +1,7 @@
 package gutsandgun.kite_result.entity.read;
 
 import gutsandgun.kite_result.entity.BaseTimeEntity;
+import gutsandgun.kite_result.type.SendingType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,8 +38,13 @@ public class Broker extends BaseTimeEntity {
 	 * 중계사 컬러 hex
 	 */
 	@Comment("중계사 색")
-	@ColumnDefault("FF0000")
 	private String color = "#FF0000";
+
+	/**
+	 * 발송 메시지 타입
+	 */
+	@Comment("발송 메시지 타입")
+	private SendingType sendingType;
 
 
 	/**
