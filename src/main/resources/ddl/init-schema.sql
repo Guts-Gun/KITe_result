@@ -110,8 +110,6 @@ CREATE TABLE result_tx
     input_time           BIGINT                NULL,
     schedule_time        BIGINT                NULL,
     start_time           BIGINT                NULL,
-    send_time            BIGINT                NULL,
-    complete_time        BIGINT                NULL,
     log_time             BIGINT                NULL,
     is_deleted           BIT(1)                NULL,
     CONSTRAINT pk_resulttx PRIMARY KEY (id)
@@ -133,6 +131,22 @@ CREATE TABLE result_tx_failure
     content              VARCHAR(255) NULL,
     is_deleted           BIT(1)       NULL,
     CONSTRAINT pk_resulttxfailure PRIMARY KEY (id)
+);
+
+CREATE TABLE result_tx_transfer
+(
+    id              BIGINT AUTO_INCREMENT NOT NULL,
+    reg_dt          VARCHAR(255)          NULL,
+    mod_dt          VARCHAR(255)          NULL,
+    fk_result_tx_id BIGINT                NULL,
+    fk_broker_id    BIGINT                NULL,
+    success         BIT(1)                NULL,
+    fail_reason     INT                   NULL,
+    send_time       BIGINT                NULL,
+    complete_time   BIGINT                NULL,
+    log_time        BIGINT                NULL,
+    is_deleted      BIT(1)                NULL,
+    CONSTRAINT pk_result_tx_transfer PRIMARY KEY (id)
 );
 
 CREATE TABLE send_replace
