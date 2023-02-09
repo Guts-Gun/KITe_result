@@ -322,3 +322,17 @@ CREATE TABLE user_phone
     mod_id     VARCHAR(20)           NULL,
     CONSTRAINT pk_user_phone PRIMARY KEY (id)
 );
+
+CREATE TABLE user_sending_rule
+(
+    id           BIGINT AUTO_INCREMENT NOT NULL,
+    reg_dt       VARCHAR(255)          NULL,
+    mod_dt       VARCHAR(255)          NULL,
+    fk_user_id   VARCHAR(255)          NULL,
+    fk_broker_id BIGINT                NULL,
+    weight       BIGINT                NULL,
+    reg_id       VARCHAR(20)           NOT NULL,
+    mod_id       VARCHAR(20)           NULL,
+    is_deleted   BIT(1)                NULL,
+    CONSTRAINT pk_user_sending_rule PRIMARY KEY (id)
+);
