@@ -5,6 +5,7 @@ import gutsandgun.kite_result.service.ResultService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,11 +20,19 @@ import java.util.List;
 public class ResultController {
 	private final ResultService resultService;
 
+	String findUser(Principal principal) {
+		JwtAuthenticationToken token = (JwtAuthenticationToken) principal;
+		String userId = token.getTokenAttributes().get("preferred_username").toString();
+		System.out.println(userId);
+//		 여긴 나중에
+//		return(userId);
+		return ("solbitest");
+	}
 
 	@GetMapping("/usage")
-	public List<UsageDto> getTotalUsage(Principal principal) {
-		List<UsageDto> usageDtoList = resultService.getTotalUsage(principal);
-		return (usageDtoList);
+	public List<TotalUsageDto> getTotalUsage(Principal principal) {
+		List<TotalUsageDto> totalUsageDtoList = resultService.getTotalUsage(findUser(principal));
+		return (totalUsageDtoList);
 	}
 
 	//token null 해결하기

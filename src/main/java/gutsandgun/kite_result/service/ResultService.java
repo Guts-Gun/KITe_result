@@ -23,12 +23,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 
 @Service
 @AllArgsConstructor
 public class ResultService {
 	private final ReadSendingRepository readSendingRepository;
-	private final ReadResultSendingRepository readResultSendingRepository;
+	private final ReadResultSendingRepository resultSendingRepository;
 	private final ReadResultTxRepository readResultTxRepository;
 	private final ReadBrokerRepository readBrokerRepository;
 
@@ -42,29 +43,22 @@ public class ResultService {
 		return ("solbitest");
 	}
 
-	Long findResultSendingId(Long sendingId) {
-		return readResultSendingRepository.findBySendingId(sendingId).getId();
+	Long getUsageCap(String userId) {
+		return 100L;
 	}
 
-	public List<UsageDto> getTotalUsage(Principal principal) {
-		List<Sending> sendingList = readSendingRepository.findByUserId(findUser(principal));
+	Long findResultSendingId(Long sendingId) {
+		return resultSendingRepository.findBySendingId(sendingId).getId();
+	}
 
-		//여기 심각함 나중에 고치기
-		List<UsageDto> usageDtoList = new java.util.ArrayList<>(emptyList());
+	public List<TotalUsageDto> getTotalUsage(String userId) {
 
+		List<TotalUsageDto> totalUsageDtoList = resultSendingRepository.findTotalUsageBySendingTypeAndUserId(userId)
+				.stream()
+				.map(totalUsage -> new TotalUsageDto(totalUsage.getSendingType(), totalUsage.getTotalUsage(), getUsageCap(userId)))
+				.collect(Collectors.toList());
 
-		Map<SendingType, LongSummaryStatistics> testCollect = sendingList.stream()
-				.collect(Collectors.groupingBy(Sending::getSendingType, Collectors.summarizingLong(Sending::getTotalMessage))
-				);
-		System.out.println(testCollect.toString());
-
-		for (Map.Entry<SendingType, LongSummaryStatistics> entry : testCollect.entrySet()) {
-			SendingType s = entry.getKey();
-			LongSummaryStatistics longSummaryStatistics = entry.getValue();
-			usageDtoList.add(new UsageDto(s, 1000L, longSummaryStatistics.getSum()));
-		}
-
-		return usageDtoList;
+		return totalUsageDtoList;
 	}
 
 
@@ -80,7 +74,7 @@ public class ResultService {
 	}
 
 	public Page<ResultSendingDto> getTotalResultSending(Principal principal, Pageable pageable) {
-		Page<ResultSending> resultSendingPage = readResultSendingRepository.findByUserId(findUser(principal), pageable);
+		Page<ResultSending> resultSendingPage = resultSendingRepository.findByUserId(findUser(principal), pageable);
 		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(ResultSendingDto::toDto);
 		System.out.println(resultSendingDtoList);
 		return resultSendingDtoList;
@@ -88,7 +82,7 @@ public class ResultService {
 
 	public ResultSendingDto getResultSending(Principal principal, Long sendingId) {
 		//없을때 에러 어케 처리할지 정하기
-		ResultSending resultSending = readResultSendingRepository.findByUserIdAndSendingId(findUser(principal), sendingId);
+		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(findUser(principal), sendingId);
 		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(resultSending);
 		System.out.println(resultSendingDto);
 		return resultSendingDto;
@@ -96,7 +90,7 @@ public class ResultService {
 
 
 	public ResultBrokerDto getResultSendingBroker(Principal principal, Long sendingId) {
-		ResultSending resultSending = readResultSendingRepository.findByUserIdAndSendingId(findUser(principal), sendingId);
+		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(findUser(principal), sendingId);
 		List<ResultTx> resultTxList = readResultTxRepository.findByResultSendingId(resultSending.getId());
 		Map<String, Long> brokerCount;
 		Map<String, Map<Boolean, Long>> brokerSuccessFail;
