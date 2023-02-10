@@ -15,6 +15,10 @@ import java.util.List;
 public interface ReadResultSendingRepository extends JpaRepository<ResultSending, Long> {
 	ResultSending findBySendingId(Long sendingId);
 
+	@Query("select r from ResultSending r where r.userId = ?1")
+	List<ResultSending> findAllByUserId(String userId);
+
+
 	Page<ResultSending> findByUserId(String userId, Pageable pageable);
 
 
