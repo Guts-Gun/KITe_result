@@ -9,11 +9,9 @@ import gutsandgun.kite_result.repository.read.ReadBrokerRepository;
 import gutsandgun.kite_result.repository.read.ReadResultSendingRepository;
 import gutsandgun.kite_result.repository.read.ReadResultTxRepository;
 import gutsandgun.kite_result.repository.read.ReadSendingRepository;
-import gutsandgun.kite_result.type.SendingType;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -22,7 +20,6 @@ import java.util.LongSummaryStatistics;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
 @Service
@@ -62,14 +59,25 @@ public class ResultService {
 	}
 
 
-	public List<SendingDto> getTotalSending(Principal principal) {
-		List<Sending> sendingList = readSendingRepository.findByUserId(findUser(principal));
-		List<SendingDto> sendingDtoList = sendingList.stream().map(sending -> {
-			return new SendingDto(sending);
-		}).collect(Collectors.toList());
-		System.out.println(sendingDtoList.toString());
+	public List<SendingShortInfoDto> getTotalSending(String userId) {
 
-		return sendingDtoList;
+		List<Sending> sendingList = readSendingRepository.findByUserId(userId);
+
+		List<ResultTxSuccessRateProjection> projectionList = readResultTxRepository.getTxSuccessCountGroupByResultSendingByUserId(userId);
+		List<ResultTxSuccessDto> resultTxSuccessDtoList = projectionList.stream()
+				.map(item -> new ResultTxSuccessDto(item.getSendingId(), item.getSuccess(), item.getCount()))
+				.toList();
+
+		List<SendingShortInfoDto> sendingShortInfoDtoList = sendingList
+				.stream()
+				.map(sending -> new SendingShortInfoDto(sending,
+						resultTxSuccessDtoList.stream()
+								.filter(item -> item.getSendingId()
+										.equals(sending.getId()))
+								.collect(Collectors.toList())))
+				.collect(Collectors.toList());
+
+		return sendingShortInfoDtoList;
 
 	}
 
@@ -123,12 +131,13 @@ public class ResultService {
 		NameDateListDto temp = new NameDateListDto(tempName, tempData);
 
 
-		brokerSpeed = resultTxList.stream()
-				.collect(Collectors.groupingBy(ResultTx -> brokerMap.get(ResultTx.getBrokerId()).getName(),
-						Collectors.summarizingLong(ResultTx -> ResultTx.getCompleteTime() - ResultTx.getSendTime())));
+//		brokerSpeed = resultTxList.stream()
+//				.collect(Collectors.groupingBy(ResultTx -> brokerMap.get(ResultTx.getBrokerId()).getName(),
+//						Collectors.summarizingLong(ResultTx -> ResultTx.getCompleteTime() - ResultTx.getSendTime())));
 
-		ResultBrokerDto resultBrokerDto = new ResultBrokerDto(sendingId, brokerCount, temp, brokerSpeed);
+//		ResultBrokerDto resultBrokerDto = new ResultBrokerDto(sendingId, brokerCount, temp, brokerSpeed);
 
+		ResultBrokerDto resultBrokerDto = new ResultBrokerDto(sendingId, brokerCount, temp, emptyMap());
 		return resultBrokerDto;
 	}
 

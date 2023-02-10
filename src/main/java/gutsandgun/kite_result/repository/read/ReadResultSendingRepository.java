@@ -1,7 +1,6 @@
 package gutsandgun.kite_result.repository.read;
 
 import gutsandgun.kite_result.dto.TotalUsage;
-import gutsandgun.kite_result.dto.TotalUsageDto;
 import gutsandgun.kite_result.entity.read.ResultSending;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +22,7 @@ public interface ReadResultSendingRepository extends JpaRepository<ResultSending
 
 	@Query(value =
 			"SELECT " +
-					" rs.sending_type AS sendingType, " +
+					"rs.sending_type AS sendingType, " +
 					"SUM(rs.total_message) AS totalUsage " +
 					"FROM result_sending AS rs " +
 					"WHERE rs.fk_user_id = :userId " +
@@ -32,4 +31,6 @@ public interface ReadResultSendingRepository extends JpaRepository<ResultSending
 	)
 	List<TotalUsage> findTotalUsageBySendingTypeAndUserId(
 			@Param("userId") String userId);
+
+
 }

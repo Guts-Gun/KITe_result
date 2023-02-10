@@ -21,9 +21,9 @@ public class ResultController {
 	private final ResultService resultService;
 
 	String findUser(Principal principal) {
-		JwtAuthenticationToken token = (JwtAuthenticationToken) principal;
-		String userId = token.getTokenAttributes().get("preferred_username").toString();
-		System.out.println(userId);
+//		JwtAuthenticationToken token = (JwtAuthenticationToken) principal;
+//		String userId = token.getTokenAttributes().get("preferred_username").toString();
+//		System.out.println(userId);
 //		 여긴 나중에
 //		return(userId);
 		return ("solbitest");
@@ -37,9 +37,9 @@ public class ResultController {
 
 	//token null 해결하기
 	@GetMapping("/sending")
-	public List<SendingDto> getTotalSending(Principal principal) {
-		List<SendingDto> sendingDtoList = resultService.getTotalSending(principal);
-		return (sendingDtoList);
+	public List<SendingShortInfoDto> getTotalSending(Principal principal) {
+		List<SendingShortInfoDto> sendingShortInfoDtoList = resultService.getTotalSending(findUser(principal));
+		return (sendingShortInfoDtoList);
 	}
 
 	@GetMapping("/sending/result")

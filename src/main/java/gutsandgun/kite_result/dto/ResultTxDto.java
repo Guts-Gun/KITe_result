@@ -49,7 +49,7 @@ public class ResultTxDto implements Serializable {
 				.mediaLink(resultTx.getMediaLink())
 				.content(resultTx.getContent())
 				.inputTime(resultTx.getInputTime())
-				.completeTime(resultTx.getCompleteTime())
+//				.completeTime(resultTx.getCompleteTime())
 				.build();
 	}
 }

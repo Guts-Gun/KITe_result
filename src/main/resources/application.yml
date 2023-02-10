@@ -16,18 +16,19 @@ spring:
       ddl-auto: update  # option type: create, create-drop, update, validate, none
       naming:
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: https://gutsandgun.kro.kr:10006/realms/KITe/protocol/openid-connect/certs
-
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         storage_engine: innodb
         format_sql: true
         show_sql: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: https://gutsandgun.kro.kr:10006/realms/KITe/protocol/openid-connect/certs
+
 
 logging:
   level:
