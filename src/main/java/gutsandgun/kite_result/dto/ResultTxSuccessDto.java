@@ -24,6 +24,9 @@ public class ResultTxSuccessDto {
 
 	public ResultTxSuccessDto(Long sendingId, List<ResultTxSuccessRateProjection> resultTxSuccessRateProjections) {
 		this.sendingId = sendingId;
+		if (resultTxSuccessRateProjections == null){
+			return;
+		}
 
 		for (ResultTxSuccessRateProjection resultTxSuccessRateProjection : resultTxSuccessRateProjections) {
 			if (resultTxSuccessRateProjection.getSuccess() == TRUE) {

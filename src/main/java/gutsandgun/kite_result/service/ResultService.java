@@ -59,19 +59,24 @@ public class ResultService {
 	}
 
 
-	public List<SendingShortInfoDto> getTotalSending(String userId) {
+	public List<SendingShortInfoDto> getTotalSendingShortInfo(String userId) {
 
-		List<Sending> sendingList = readSendingRepository.findByUserId(userId);
-		List<ResultSending> resultSendingList = resultSendingRepository.findAllByUserId(userId);
-		List<ResultTxSuccessRateProjection> projectionList = readResultTxRepository.getTxSuccessCountGroupByResultSendingByUserId(userId);
-
-		List<SendingShortInfoDto> sendingShortInfoDtoList = sendingList
+		Map<Long, ResultSending> resultSendingMap = resultSendingRepository.findAllByUserId(userId)
 				.stream()
-				.map(sending -> new SendingShortInfoDto(sending,
-						resultSendingList.stream().filter(item -> item.getSendingId().equals(sending.getId())).findFirst().get(),
-						new ResultTxSuccessDto(sending.getId(), projectionList.stream()
-								.filter(item -> item.getSendingId().equals(sending.getId()))
-								.toList())))
+				.collect(Collectors.toMap(ResultSending::getSendingId, Function.identity()));
+
+		Map<Long, List<ResultTxSuccessRateProjection>> successCountProjectionMap = readResultTxRepository.getTxSuccessCountGroupByResultSendingByUserId(userId)
+				.stream()
+				.collect(Collectors.groupingBy(ResultTxSuccessRateProjection::getSendingId));
+
+		List<SendingShortInfoDto> sendingShortInfoDtoList = readSendingRepository.findByUserId(userId)
+				.stream()
+				.map(sending -> {
+					ResultSending resultSending = resultSendingMap.get(sending.getId());
+					List<ResultTxSuccessRateProjection> projections = successCountProjectionMap.get(sending.getId());
+					ResultTxSuccessDto successDto = new ResultTxSuccessDto(sending.getId(), projections);
+					return new SendingShortInfoDto(sending, resultSending, successDto);
+				})
 				.collect(Collectors.toList());
 
 		return sendingShortInfoDtoList;
