@@ -4,13 +4,14 @@ import gutsandgun.kite_result.dto.*;
 import gutsandgun.kite_result.entity.read.Broker;
 import gutsandgun.kite_result.entity.read.ResultSending;
 import gutsandgun.kite_result.entity.read.ResultTx;
+import gutsandgun.kite_result.entity.read.Sending;
 import gutsandgun.kite_result.repository.read.*;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
+import java.util.Collections;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Map;
@@ -29,15 +30,6 @@ public class ResultService {
 	private final ResultTxTransferRepository resultTxTransferRepository;
 
 
-	String findUser(Principal principal) {
-//		JwtAuthenticationToken token = (JwtAuthenticationToken) principal;
-//		String userId = token.getTokenAttributes().get("preferred_username").toString();
-//		System.out.println(userId);
-		// 여긴 나중에
-//		return(userId);
-		return ("solbitest");
-	}
-
 	Long getUsageCap(String userId) {
 		return 100L;
 	}
@@ -45,6 +37,31 @@ public class ResultService {
 	Long findResultSendingId(Long sendingId) {
 		return resultSendingRepository.findBySendingId(sendingId).getId();
 	}
+
+	Map<Long, ResultTxSuccessDto> getSuccessCntMap(String userId, List<Long> sendingId) {
+
+		Map<Long, List<ResultTxSuccessRateProjection>> successCountProjectionMap =
+				resultSendingRepository.getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(userId, sendingId)
+						.stream()
+						.collect(Collectors.groupingBy(ResultTxSuccessRateProjection::getSendingId));
+
+		Map<Long, ResultTxSuccessDto> successDtoMap = successCountProjectionMap.keySet()
+				.stream()
+				.collect(Collectors.toMap(key -> key, key -> new ResultTxSuccessDto(key, successCountProjectionMap.get(key))));
+
+		return successDtoMap;
+	}
+
+	Map<Long, Long> getLatencyAvgMap(String userId, List<Long> sendingId) {
+
+		Map<Long, Long> txLatencyAvgMap
+				= resultTxTransferRepository.getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(userId, sendingId)
+				.stream()
+				.collect(Collectors.toMap(ResultTxAvgLatencyProjection::getSendingId, ResultTxAvgLatencyProjection::getAvgLatency));
+
+		return txLatencyAvgMap;
+	}
+
 
 	public List<TotalUsageDto> getTotalUsage(String userId) {
 
@@ -59,24 +76,18 @@ public class ResultService {
 
 	public List<SendingShortInfoDto> getTotalSendingShortInfo(String userId) {
 
+		List<Sending> sendingList = readSendingRepository.findByUserId(userId);
+
 		Map<Long, ResultSending> resultSendingMap = resultSendingRepository.findAllByUserId(userId)
 				.stream()
 				.collect(Collectors.toMap(ResultSending::getSendingId, Function.identity()));
 
-		Map<Long, List<ResultTxSuccessRateProjection>> successCountProjectionMap =
-				readResultTxRepository.getTxSuccessCountGroupByResultSendingByUserId(userId)
-						.stream()
-						.collect(Collectors.groupingBy(ResultTxSuccessRateProjection::getSendingId));
+		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(userId, sendingList.stream().map(Sending::getId).toList());
 
-		Map<Long, ResultTxSuccessDto> successDtoMap = successCountProjectionMap.keySet()
-				.stream()
-				.collect(Collectors.toMap(key -> key, key -> new ResultTxSuccessDto(key, successCountProjectionMap.get(key))));
 
-		List<SendingShortInfoDto> sendingShortInfoDtoList = readSendingRepository.findByUserId(userId)
-				.stream()
+		List<SendingShortInfoDto> sendingShortInfoDtoList = sendingList.stream()
 				.map(sending -> {
-					ResultSending resultSending = resultSendingMap.get(sending.getId());
-					return new SendingShortInfoDto(sending, resultSending, successDtoMap.get(sending.getId()));
+					return new SendingShortInfoDto(sending, resultSendingMap.get(sending.getId()), successDtoMap.get(sending.getId()));
 				})
 				.collect(Collectors.toList());
 
@@ -87,22 +98,11 @@ public class ResultService {
 	public Page<ResultSendingDto> getTotalResultSending(String userId, Pageable pageable) {
 		Page<ResultSending> resultSendingPage = resultSendingRepository.findByUserId(userId, pageable);
 
-		Map<Long, List<ResultTxSuccessRateProjection>> successCountProjectionMap =
-				resultSendingRepository.getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(userId, resultSendingPage.map(ResultSending::getSendingId).toList())
-						.stream()
-						.collect(Collectors.groupingBy(ResultTxSuccessRateProjection::getSendingId));
+		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(userId, resultSendingPage.stream().map(ResultSending::getSendingId).toList());
 
-		Map<Long, ResultTxSuccessDto> successDtoMap = successCountProjectionMap.keySet()
-				.stream()
-				.collect(Collectors.toMap(key -> key, key -> new ResultTxSuccessDto(key, successCountProjectionMap.get(key))));
+		Map<Long, Long> txLatencyAvgMap = getLatencyAvgMap(userId, resultSendingPage.stream().map(ResultSending::getSendingId).toList());
 
-		Map<Long, Long> avgLatencyProjectionMap
-				= resultTxTransferRepository.getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(userId, resultSendingPage.map(ResultSending::getSendingId).toList())
-				.stream()
-				.collect(Collectors.toMap(ResultTxAvgLatencyProjection::getSendingId, ResultTxAvgLatencyProjection::getAvgLatency));
-
-
-		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(resultSending -> ResultSendingDto.toDto(resultSending, successDtoMap.get(resultSending.getSendingId()), avgLatencyProjectionMap.get(resultSending.getSendingId())));
+		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(resultSending -> ResultSendingDto.toDto(resultSending, successDtoMap.get(resultSending.getSendingId()), txLatencyAvgMap.get(resultSending.getSendingId())));
 		System.out.println(resultSendingDtoList);
 		return resultSendingDtoList;
 	}
@@ -110,7 +110,12 @@ public class ResultService {
 	public ResultSendingDto getResultSending(String userId, Long sendingId) {
 		//없을때 에러 어케 처리할지 정하기
 		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId);
-		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(resultSending, new ResultTxSuccessDto(),0L);
+
+		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(userId, Collections.singletonList(resultSending.getSendingId()));
+		Map<Long, Long> txLatencyAvgMap = getLatencyAvgMap(userId, Collections.singletonList(resultSending.getSendingId()));
+
+
+		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(resultSending, successDtoMap.get(resultSending.getSendingId()), txLatencyAvgMap.get(resultSending.getSendingId()));
 		System.out.println(resultSendingDto);
 		return resultSendingDto;
 	}
