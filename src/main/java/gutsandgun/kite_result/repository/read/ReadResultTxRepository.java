@@ -23,6 +23,16 @@ public interface ReadResultTxRepository extends JpaRepository<ResultTx, Long> {
 	)
 	List<ResultTxSuccessRateProjection> getTxSuccessCountGroupByResultSendingByUserId(@Param("userId") String userId);
 
+	@Query(value =
+			"SELECT rs.fk_sending_id as sendingId, rt.success, COUNT(rt.success) as count " +
+					"from result_sending as rs, result_tx as rt " +
+					"where rs.fk_user_id = :userId and rs.fk_sending_id In :sendingId and rs.id = rt.fk_result_sending_id " +
+					"group by rs.fk_sending_id, rt.success "
+			, nativeQuery = true
+	)
+	List<ResultTxSuccessRateProjection> getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(@Param("userId") String userId, @Param("sendingId") List<Long> sendingId);
+
+
 	Page<ResultTx> findByUserIdAndResultSendingId(String userId, Long resultSendingId, Pageable pageable);
 
 	List<ResultTx> findByResultSendingId(Long resultSendingId);

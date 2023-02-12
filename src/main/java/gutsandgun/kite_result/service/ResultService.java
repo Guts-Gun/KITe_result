@@ -4,11 +4,7 @@ import gutsandgun.kite_result.dto.*;
 import gutsandgun.kite_result.entity.read.Broker;
 import gutsandgun.kite_result.entity.read.ResultSending;
 import gutsandgun.kite_result.entity.read.ResultTx;
-import gutsandgun.kite_result.entity.read.Sending;
-import gutsandgun.kite_result.repository.read.ReadBrokerRepository;
-import gutsandgun.kite_result.repository.read.ReadResultSendingRepository;
-import gutsandgun.kite_result.repository.read.ReadResultTxRepository;
-import gutsandgun.kite_result.repository.read.ReadSendingRepository;
+import gutsandgun.kite_result.repository.read.*;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +14,7 @@ import java.security.Principal;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyMap;
@@ -29,6 +26,7 @@ public class ResultService {
 	private final ReadResultSendingRepository resultSendingRepository;
 	private final ReadResultTxRepository readResultTxRepository;
 	private final ReadBrokerRepository readBrokerRepository;
+	private final ResultTxTransferRepository resultTxTransferRepository;
 
 
 	String findUser(Principal principal) {
@@ -65,17 +63,20 @@ public class ResultService {
 				.stream()
 				.collect(Collectors.toMap(ResultSending::getSendingId, Function.identity()));
 
-		Map<Long, List<ResultTxSuccessRateProjection>> successCountProjectionMap = readResultTxRepository.getTxSuccessCountGroupByResultSendingByUserId(userId)
+		Map<Long, List<ResultTxSuccessRateProjection>> successCountProjectionMap =
+				readResultTxRepository.getTxSuccessCountGroupByResultSendingByUserId(userId)
+						.stream()
+						.collect(Collectors.groupingBy(ResultTxSuccessRateProjection::getSendingId));
+
+		Map<Long, ResultTxSuccessDto> successDtoMap = successCountProjectionMap.keySet()
 				.stream()
-				.collect(Collectors.groupingBy(ResultTxSuccessRateProjection::getSendingId));
+				.collect(Collectors.toMap(key -> key, key -> new ResultTxSuccessDto(key, successCountProjectionMap.get(key))));
 
 		List<SendingShortInfoDto> sendingShortInfoDtoList = readSendingRepository.findByUserId(userId)
 				.stream()
 				.map(sending -> {
 					ResultSending resultSending = resultSendingMap.get(sending.getId());
-					List<ResultTxSuccessRateProjection> projections = successCountProjectionMap.get(sending.getId());
-					ResultTxSuccessDto successDto = new ResultTxSuccessDto(sending.getId(), projections);
-					return new SendingShortInfoDto(sending, resultSending, successDto);
+					return new SendingShortInfoDto(sending, resultSending, successDtoMap.get(sending.getId()));
 				})
 				.collect(Collectors.toList());
 
@@ -83,24 +84,40 @@ public class ResultService {
 
 	}
 
-	public Page<ResultSendingDto> getTotalResultSending(Principal principal, Pageable pageable) {
-		Page<ResultSending> resultSendingPage = resultSendingRepository.findByUserId(findUser(principal), pageable);
-		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(ResultSendingDto::toDto);
+	public Page<ResultSendingDto> getTotalResultSending(String userId, Pageable pageable) {
+		Page<ResultSending> resultSendingPage = resultSendingRepository.findByUserId(userId, pageable);
+
+		Map<Long, List<ResultTxSuccessRateProjection>> successCountProjectionMap =
+				resultSendingRepository.getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(userId, resultSendingPage.map(ResultSending::getSendingId).toList())
+						.stream()
+						.collect(Collectors.groupingBy(ResultTxSuccessRateProjection::getSendingId));
+
+		Map<Long, ResultTxSuccessDto> successDtoMap = successCountProjectionMap.keySet()
+				.stream()
+				.collect(Collectors.toMap(key -> key, key -> new ResultTxSuccessDto(key, successCountProjectionMap.get(key))));
+
+		Map<Long, Long> avgLatencyProjectionMap
+				= resultTxTransferRepository.getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(userId, resultSendingPage.map(ResultSending::getSendingId).toList())
+				.stream()
+				.collect(Collectors.toMap(ResultTxAvgLatencyProjection::getSendingId, ResultTxAvgLatencyProjection::getAvgLatency));
+
+
+		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(resultSending -> ResultSendingDto.toDto(resultSending, successDtoMap.get(resultSending.getSendingId()), avgLatencyProjectionMap.get(resultSending.getSendingId())));
 		System.out.println(resultSendingDtoList);
 		return resultSendingDtoList;
 	}
 
-	public ResultSendingDto getResultSending(Principal principal, Long sendingId) {
+	public ResultSendingDto getResultSending(String userId, Long sendingId) {
 		//없을때 에러 어케 처리할지 정하기
-		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(findUser(principal), sendingId);
-		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(resultSending);
+		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId);
+		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(resultSending, new ResultTxSuccessDto(),0L);
 		System.out.println(resultSendingDto);
 		return resultSendingDto;
 	}
 
 
-	public ResultBrokerDto getResultSendingBroker(Principal principal, Long sendingId) {
-		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(findUser(principal), sendingId);
+	public ResultBrokerDto getResultSendingBroker(String userId, Long sendingId) {
+		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId);
 		List<ResultTx> resultTxList = readResultTxRepository.findByResultSendingId(resultSending.getId());
 		Map<String, Long> brokerCount;
 		Map<String, Map<Boolean, Long>> brokerSuccessFail;
@@ -143,8 +160,8 @@ public class ResultService {
 		return resultBrokerDto;
 	}
 
-	public Page<ResultTxDto> getResultSendingTx(Principal principal, Pageable pageable, Long sendingId) {
-		Page<ResultTx> resultTxPage = readResultTxRepository.findByUserIdAndResultSendingId(findUser(principal), findResultSendingId(sendingId), pageable);
+	public Page<ResultTxDto> getResultSendingTx(String userId, Pageable pageable, Long sendingId) {
+		Page<ResultTx> resultTxPage = readResultTxRepository.findByUserIdAndResultSendingId(userId, findResultSendingId(sendingId), pageable);
 		Page<ResultTxDto> resultTxDtoPage = resultTxPage.map(ResultTxDto::toDto);
 		return resultTxDtoPage;
 	}

@@ -5,7 +5,6 @@ import gutsandgun.kite_result.service.ResultService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,33 +34,32 @@ public class ResultController {
 		return (totalUsageDtoList);
 	}
 
-	//token null 해결하기
 	@GetMapping("/sending")
-	public List<SendingShortInfoDto> getTotalSending(Principal principal) {
-		List<SendingShortInfoDto> sendingShortInfoDtoList = resultService.getTotalSending(findUser(principal));
+	public List<SendingShortInfoDto> getTotalSendingShortInfo(Principal principal) {
+		List<SendingShortInfoDto> sendingShortInfoDtoList = resultService.getTotalSendingShortInfo(findUser(principal));
 		return (sendingShortInfoDtoList);
 	}
 
 	@GetMapping("/sending/result")
 	public Page<ResultSendingDto> getTotalResultSending(Principal principal, Pageable pageable) {
-		return resultService.getTotalResultSending(principal, pageable);
+		return resultService.getTotalResultSending(findUser(principal), pageable);
 	}
 
 	@GetMapping("/sending/result/{sendingId}")
 	public ResultSendingDto getResultSending(Principal principal, @PathVariable Long sendingId) {
-		ResultSendingDto resultSendingDto = resultService.getResultSending(principal, sendingId);
+		ResultSendingDto resultSendingDto = resultService.getResultSending(findUser(principal), sendingId);
 		return resultSendingDto;
 	}
 
 	@GetMapping("/sending/result/{sendingId}/broker")
 	public ResultBrokerDto getResultSendingBroker(Principal principal, @PathVariable Long sendingId) {
-		ResultBrokerDto resultBrokerDto = resultService.getResultSendingBroker(principal, sendingId);
+		ResultBrokerDto resultBrokerDto = resultService.getResultSendingBroker(findUser(principal), sendingId);
 		return resultBrokerDto;
 	}
 
 	@GetMapping("/sending/result/{sendingId}/tx")
 	public Page<ResultTxDto> getResultSendingTx(Principal principal, Pageable pageable, @PathVariable Long sendingId) {
-		return resultService.getResultSendingTx(principal, pageable, sendingId);
+		return resultService.getResultSendingTx(findUser(principal), pageable, sendingId);
 	}
 
 }

@@ -1,5 +1,6 @@
 package gutsandgun.kite_result.repository.read;
 
+import gutsandgun.kite_result.dto.ResultTxSuccessRateProjection;
 import gutsandgun.kite_result.dto.TotalUsage;
 import gutsandgun.kite_result.entity.read.ResultSending;
 import org.springframework.data.domain.Page;
@@ -36,5 +37,13 @@ public interface ReadResultSendingRepository extends JpaRepository<ResultSending
 	List<TotalUsage> findTotalUsageBySendingTypeAndUserId(
 			@Param("userId") String userId);
 
+	@Query(value =
+			"SELECT rs.fk_sending_id as sendingId, rt.success, COUNT(rt.success) as count " +
+					"from result_sending as rs, result_tx as rt " +
+					"where rs.fk_user_id = :userId and rs.fk_sending_id In :sendingId and rs.id = rt.fk_result_sending_id " +
+					"group by rs.fk_sending_id, rt.success "
+			, nativeQuery = true
+	)
+	List<ResultTxSuccessRateProjection> getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(@Param("userId") String userId, @Param("sendingId") List<Long> sendingId);
 
 }

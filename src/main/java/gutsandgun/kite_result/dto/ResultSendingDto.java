@@ -23,7 +23,7 @@ public class ResultSendingDto implements Serializable {
 	private final Boolean success;
 	private final Long totalMessage;
 	private final Long failedMessage;
-	private final Float avgLatency;
+	private final Long avgLatency;
 
 	private final Long inputTime;
 	private final Long scheduleTime;
@@ -32,7 +32,16 @@ public class ResultSendingDto implements Serializable {
 	private final Long logTime;
 	private final SendingStatus sendingStatus;
 
-	public static ResultSendingDto toDto(final ResultSending resultSending) {
+	private final ResultTxSuccessDto resultTxSuccessDto;
+
+
+	public static ResultSendingDto toDto(final ResultSending resultSending, ResultTxSuccessDto resultTxSuccessDto, Long avgLatency) {
+		if (resultTxSuccessDto == null) {
+			resultTxSuccessDto = new ResultTxSuccessDto(resultSending.getSendingId(), 0, 0);
+		}
+		if (avgLatency == null)
+			avgLatency = 0L;
+
 		return ResultSendingDto.builder()
 				.id(resultSending.getId())
 				.userId(resultSending.getUserId())
@@ -42,12 +51,14 @@ public class ResultSendingDto implements Serializable {
 				.success(resultSending.getSuccess())
 				.totalMessage(resultSending.getTotalMessage())
 				.failedMessage(resultSending.getFailedMessage())
-				.avgLatency(resultSending.getAvgLatency())
+				.avgLatency(avgLatency)
 				.inputTime(resultSending.getInputTime())
 				.scheduleTime(resultSending.getScheduleTime())
 				.startTime(resultSending.getStartTime())
 				.completeTime(resultSending.getCompleteTime())
 				.logTime(resultSending.getLogTime())
+				.sendingStatus(resultSending.getSendingStatus())
+				.resultTxSuccessDto(resultTxSuccessDto)
 				.build();
 	}
 }

@@ -8,6 +8,7 @@ import gutsandgun.kite_result.type.SendingType;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * A DTO for the {@link gutsandgun.kite_result.entity.read.Sending} entity
@@ -29,7 +30,13 @@ public class SendingShortInfoDto implements Serializable {
 
 	public SendingShortInfoDto(Sending sending, ResultSending resultSending, ResultTxSuccessDto resultTxSuccessDto) {
 		this.id = sending.getId();
-		this.sendingStatus = resultSending.getSendingStatus();
+
+		if (resultTxSuccessDto != null) {
+			this.sendingStatus = resultSending.getSendingStatus();
+		} else
+			this.sendingStatus = SendingStatus.PENDING;
+
+
 		this.inputTime = sending.getInputTime();
 		this.sendingRuleType = sending.getSendingRuleType();
 		this.sendingType = sending.getSendingType();
@@ -38,7 +45,9 @@ public class SendingShortInfoDto implements Serializable {
 		this.mediaLink = sending.getMediaLink();
 		this.content = sending.getContent();
 		this.sender = sending.getSender();
-		this.resultTxSuccessDto = resultTxSuccessDto;
+
+		this.resultTxSuccessDto = Objects.requireNonNullElseGet(resultTxSuccessDto, () -> new ResultTxSuccessDto(sending.getId(), 0, 0));
+
 	}
 
 }
