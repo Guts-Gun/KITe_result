@@ -3,10 +3,7 @@ package gutsandgun.kite_result.dto;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.LongSummaryStatistics;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Data
@@ -19,11 +16,11 @@ public class ResultBrokerDto implements Serializable {
 
 	private NameDateListDto brokerSpeed;
 
-	public ResultBrokerDto(long id, Map<String, Long> brokerCount, NameDateListDto brokerSuccessFail, Map<String, LongSummaryStatistics> brokerSpeed) {
+	public ResultBrokerDto(long id, NameDateListDto brokerCount, NameDateListDto brokerSuccessFail, NameDateListDto brokerSpeed) {
 		this.id = id;
-		this.brokerCount = new NameDateListDto( brokerCount.keySet().stream().toList(), new ArrayList<>(brokerCount.values()));
+		this.brokerCount = brokerCount;
 		this.brokerSuccessFail = brokerSuccessFail;
-		this.brokerSpeed = new NameDateListDto( brokerSpeed.keySet().stream().toList(), new ArrayList<>(brokerSpeed.values().stream().map(longSummaryStatistics -> longSummaryStatistics.getAverage()).collect(Collectors.toList())));
+		this.brokerSpeed = brokerSpeed;
 	}
 }
 

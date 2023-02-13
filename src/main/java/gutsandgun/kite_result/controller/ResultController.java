@@ -72,4 +72,10 @@ public class ResultController {
 		return resultService.getFilteredResultSendingList(findUser(principal), sendingType, startDt, endDt,sendingStatus, pageable);
 	}
 
+
+	@GetMapping("/sending/result/{sendingId}/tx/{txId}")
+	public ResultTxDetailDto getResultSendingTx(Principal principal, @PathVariable Long sendingId, @PathVariable Long txId) {
+		return resultService.getResultSendingTxDetail(findUser(principal), sendingId, txId);
+	}
+
 }

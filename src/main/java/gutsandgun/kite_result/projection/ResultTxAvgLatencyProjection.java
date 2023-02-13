@@ -1,4 +1,4 @@
-package gutsandgun.kite_result.dto;
+package gutsandgun.kite_result.projection;
 
 public interface ResultTxAvgLatencyProjection {
 

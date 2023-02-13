@@ -1,6 +1,7 @@
 package gutsandgun.kite_result.dto;
 
 import com.querydsl.core.annotations.QueryProjection;
+import gutsandgun.kite_result.projection.ResultTxSuccessRateProjection;
 import lombok.Getter;
 
 import java.util.List;

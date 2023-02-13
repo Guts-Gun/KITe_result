@@ -1,6 +1,6 @@
 package gutsandgun.kite_result.repository.read;
 
-import gutsandgun.kite_result.dto.ResultTxSuccessRateProjection;
+import gutsandgun.kite_result.projection.ResultTxSuccessRateProjection;
 import gutsandgun.kite_result.entity.read.ResultTx;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +34,11 @@ public interface ReadResultTxRepository extends JpaRepository<ResultTx, Long> {
 
 
 	Page<ResultTx> findByUserIdAndResultSendingId(String userId, Long resultSendingId, Pageable pageable);
+
+	ResultTx findByUserIdAndResultSendingIdAndTxId(String userId, Long resultSendingId, Long txId);
+
+
+
 
 	List<ResultTx> findByResultSendingId(Long resultSendingId);
 }

@@ -1,4 +1,4 @@
-package gutsandgun.kite_result.dto;
+package gutsandgun.kite_result.projection;
 
 import gutsandgun.kite_result.type.SendingType;
 
