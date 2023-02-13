@@ -5,12 +5,17 @@ import gutsandgun.kite_result.entity.read.Broker;
 import gutsandgun.kite_result.entity.read.ResultSending;
 import gutsandgun.kite_result.entity.read.ResultTx;
 import gutsandgun.kite_result.entity.read.Sending;
+import gutsandgun.kite_result.querydsl.ResultRepositoryCustom;
 import gutsandgun.kite_result.repository.read.*;
+import gutsandgun.kite_result.type.SendingStatus;
+import gutsandgun.kite_result.type.SendingType;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 import java.util.LongSummaryStatistics;
@@ -29,6 +34,7 @@ public class ResultService {
 	private final ReadBrokerRepository readBrokerRepository;
 	private final ResultTxTransferRepository resultTxTransferRepository;
 
+	private final ResultRepositoryCustom resultRepositoryCustom;
 
 	Long getUsageCap(String userId) {
 		return 100L;
@@ -107,6 +113,7 @@ public class ResultService {
 		return resultSendingDtoList;
 	}
 
+
 	public ResultSendingDto getResultSending(String userId, Long sendingId) {
 		//없을때 에러 어케 처리할지 정하기
 		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId);
@@ -170,4 +177,13 @@ public class ResultService {
 		Page<ResultTxDto> resultTxDtoPage = resultTxPage.map(ResultTxDto::toDto);
 		return resultTxDtoPage;
 	}
+
+
+	public Page<ResultSendingDto> getFilteredResultSendingList(String userId, SendingType sendingType, String startDt, String endDt, SendingStatus sendingStatus, Pageable pageable) throws ParseException {
+
+		Page<ResultSendingDto> tuplePageList = resultRepositoryCustom.findByRegIdAndSendingTypeAndSuccessAndRegdt(userId, sendingType, startDt, endDt, sendingStatus, pageable);
+		List<ResultSendingDto> list = tuplePageList.getContent();
+		return new PageImpl<>(list, pageable, tuplePageList.getTotalElements());
+	}
+
 }

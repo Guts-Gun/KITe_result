@@ -1,5 +1,6 @@
 package gutsandgun.kite_result.dto;
 
+import com.querydsl.core.annotations.QueryProjection;
 import lombok.Getter;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public class ResultTxSuccessDto {
 	public ResultTxSuccessDto() {
 	}
 
+	@QueryProjection
 	public ResultTxSuccessDto(Long sendingId, long success, long fail) {
 		this.sendingId = sendingId;
 		this.successCnt = success;
