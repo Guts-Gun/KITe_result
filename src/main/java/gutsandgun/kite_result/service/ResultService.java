@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -198,9 +199,11 @@ public class ResultService {
 	}
 
 
-	public Page<ResultSendingDto> getFilteredResultSendingList(String userId, SendingType sendingType, String startDt, String endDt, SendingStatus sendingStatus, Pageable pageable) throws ParseException {
+	public Page<ResultSendingDto> getFilteredResultSendingList(String userId, SendingType sendingType, String startDt, String endDt, SendingStatus sendingStatus, PageRequestDTO pageRequestDTO) throws ParseException {
 
-		Page<ResultSendingDto> tuplePageList = resultRepositoryCustom.findByRegIdAndSendingTypeAndSuccessAndRegdt(userId, sendingType, startDt, endDt, sendingStatus, pageable);
+		Pageable pageable = pageRequestDTO.getPageable(Sort.by("reg_dt").descending());
+
+		Page<ResultSendingDto> tuplePageList = resultRepositoryCustom.findByRegIdAndSendingTypeAndSuccessAndRegDt(userId, sendingType, startDt, endDt, sendingStatus, pageable);
 		List<ResultSendingDto> list = tuplePageList.getContent();
 		return new PageImpl<>(list, pageable, tuplePageList.getTotalElements());
 	}

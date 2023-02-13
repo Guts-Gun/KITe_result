@@ -41,7 +41,7 @@ public class ResultRepositoryCustom {
 
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    public Page<ResultSendingDto> findByRegIdAndSendingTypeAndSuccessAndRegdt(
+    public Page<ResultSendingDto> findByRegIdAndSendingTypeAndSuccessAndRegDt(
             String userId, SendingType sendingType, String startDt, String endDt, SendingStatus sendingStatus, Pageable pageable) throws ParseException {
 
 
@@ -75,9 +75,9 @@ public class ResultRepositoryCustom {
                         eqUserId(userId),
                         eqSendingType(sendingType)
                 )
-                .groupBy(qResultSending.sendingId)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
+                .groupBy(qResultSending.sendingId)
                 .orderBy(qResultSending.regDt.desc())
                 .fetch();
 
@@ -93,9 +93,6 @@ public class ResultRepositoryCustom {
                         beforeInputTime(endDt),
                         eqsSendingStatus(sendingStatus)
                 )
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .orderBy(qResultSending.regDt.desc())
                 .fetchOne();
 
 
