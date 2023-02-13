@@ -1,7 +1,7 @@
 package gutsandgun.kite_result.repository.read;
 
-import gutsandgun.kite_result.dto.ResultTxSuccessRateProjection;
-import gutsandgun.kite_result.dto.TotalUsage;
+import gutsandgun.kite_result.projection.ResultTxSuccessRateProjection;
+import gutsandgun.kite_result.projection.TotalUsage;
 import gutsandgun.kite_result.entity.read.ResultSending;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

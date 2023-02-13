@@ -62,4 +62,11 @@ public class ResultController {
 		return resultService.getResultSendingTx(findUser(principal), pageable, sendingId);
 	}
 
+	@GetMapping("/sending/result/{sendingId}/tx/{txId}")
+	public ResultTxDetailDto getResultSendingTx(Principal principal, @PathVariable Long sendingId, @PathVariable Long txId) {
+		return resultService.getResultSendingTxDetail(findUser(principal), sendingId, txId);
+	}
+
+
+
 }

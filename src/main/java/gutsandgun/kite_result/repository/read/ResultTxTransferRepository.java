@@ -1,7 +1,9 @@
 package gutsandgun.kite_result.repository.read;
 
-import gutsandgun.kite_result.dto.ResultTxAvgLatencyProjection;
+import gutsandgun.kite_result.dto.ResultTxTransferDto;
 import gutsandgun.kite_result.entity.read.ResultTxTransfer;
+import gutsandgun.kite_result.projection.ResultTxAvgLatencyProjection;
+import gutsandgun.kite_result.projection.ResultTxTransferStatsProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,8 +13,6 @@ import java.util.List;
 public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransfer, Long> {
 
 	@Query(value =
-
-
 			"SELECT rs.fk_sending_id as sendingId, AVG(rtt.complete_time - rt.start_time) as avgLatency  " +
 					"from result_sending as rs," +
 					"     result_tx as rt, " +
@@ -25,4 +25,22 @@ public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransf
 			, nativeQuery = true
 	)
 	List<ResultTxAvgLatencyProjection> getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(@Param("userId") String userId, @Param("sendingId") List<Long> sendingId);
+
+
+	@Query(value =
+			"select fk_broker_id as brokerId, " +
+					"AVG(rtt.complete_time - rtt.send_time) as avgLatency, " +
+					"COUNT(*) as count\n" +
+					"from result_tx_transfer as rtt " +
+					"where rtt.fk_result_tx_id In :sendingId " +
+					"group by fk_broker_id"
+			, nativeQuery = true)
+	List<ResultTxTransferStatsProjection> getTxTransferAvgLatencyGroupByBrokerId(@Param("sendingId") List<Long> sendingId);
+
+	List<ResultTxTransferDto> findByTxId(Long txId);
+
+
+
+
+
 }

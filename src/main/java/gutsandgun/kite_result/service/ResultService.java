@@ -5,6 +5,9 @@ import gutsandgun.kite_result.entity.read.Broker;
 import gutsandgun.kite_result.entity.read.ResultSending;
 import gutsandgun.kite_result.entity.read.ResultTx;
 import gutsandgun.kite_result.entity.read.Sending;
+import gutsandgun.kite_result.projection.ResultTxAvgLatencyProjection;
+import gutsandgun.kite_result.projection.ResultTxSuccessRateProjection;
+import gutsandgun.kite_result.projection.ResultTxTransferStatsProjection;
 import gutsandgun.kite_result.repository.read.*;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,12 +16,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.LongSummaryStatistics;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptyList;
 
 @Service
 @AllArgsConstructor
@@ -122,19 +124,28 @@ public class ResultService {
 
 
 	public ResultBrokerDto getResultSendingBroker(String userId, Long sendingId) {
+		Map<Long, Broker> brokerMap = readBrokerRepository.findAllMap();
+
 		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId);
 		List<ResultTx> resultTxList = readResultTxRepository.findByResultSendingId(resultSending.getId());
-		Map<String, Long> brokerCount;
+		List<ResultTxTransferStatsProjection> txTransferAvgLatencyGroupByBrokerId = resultTxTransferRepository.getTxTransferAvgLatencyGroupByBrokerId(resultTxList.stream().map(ResultTx::getId).collect(Collectors.toList()));
+
+
+		NameDateListDto brokerCount =
+				new NameDateListDto(
+						txTransferAvgLatencyGroupByBrokerId.stream().map(ResultTxTransferStatsProjection -> brokerMap.get(ResultTxTransferStatsProjection.getBrokerId()).getName()).collect(Collectors.toList()),
+						txTransferAvgLatencyGroupByBrokerId.stream().map(ResultTxTransferStatsProjection -> brokerMap.get(ResultTxTransferStatsProjection.getBrokerId()).getColor()).collect(Collectors.toList()),
+						txTransferAvgLatencyGroupByBrokerId.stream().map(ResultTxTransferStatsProjection::getCount).collect(Collectors.toList())
+				);
+
+		NameDateListDto brokerSpeed =
+				new NameDateListDto(
+						txTransferAvgLatencyGroupByBrokerId.stream().map(ResultTxTransferStatsProjection -> brokerMap.get(ResultTxTransferStatsProjection.getBrokerId()).getName()).collect(Collectors.toList()),
+						txTransferAvgLatencyGroupByBrokerId.stream().map(ResultTxTransferStatsProjection -> brokerMap.get(ResultTxTransferStatsProjection.getBrokerId()).getColor()).collect(Collectors.toList()),
+						txTransferAvgLatencyGroupByBrokerId.stream().map(ResultTxTransferStatsProjection::getAvgLatency).collect(Collectors.toList())
+				);
+
 		Map<String, Map<Boolean, Long>> brokerSuccessFail;
-		Map<String, LongSummaryStatistics> brokerSpeed;
-
-		Map<Long, Broker> brokerMap = readBrokerRepository.findAllMap();
-		System.out.println(brokerMap);
-
-
-		brokerCount = resultTxList.stream()
-				.collect(Collectors.groupingBy(ResultTx -> brokerMap.get(ResultTx.getBrokerId()).getName(), Collectors.counting()));
-
 		//tf 둘중 하나없으면 0으로 나오게 추가하기
 		brokerSuccessFail = resultTxList.stream()
 				.collect(Collectors.groupingBy(ResultTx -> brokerMap.get(ResultTx.getBrokerId()).getName(),
@@ -152,16 +163,10 @@ public class ResultService {
 			}
 		}
 
-		NameDateListDto temp = new NameDateListDto(tempName, tempData);
+		NameDateListDto temp = new NameDateListDto(tempName, emptyList(), tempData);
 
 
-//		brokerSpeed = resultTxList.stream()
-//				.collect(Collectors.groupingBy(ResultTx -> brokerMap.get(ResultTx.getBrokerId()).getName(),
-//						Collectors.summarizingLong(ResultTx -> ResultTx.getCompleteTime() - ResultTx.getSendTime())));
-
-//		ResultBrokerDto resultBrokerDto = new ResultBrokerDto(sendingId, brokerCount, temp, brokerSpeed);
-
-		ResultBrokerDto resultBrokerDto = new ResultBrokerDto(sendingId, brokerCount, temp, emptyMap());
+		ResultBrokerDto resultBrokerDto = new ResultBrokerDto(sendingId, brokerCount, temp, brokerSpeed);
 		return resultBrokerDto;
 	}
 
@@ -169,5 +174,13 @@ public class ResultService {
 		Page<ResultTx> resultTxPage = readResultTxRepository.findByUserIdAndResultSendingId(userId, findResultSendingId(sendingId), pageable);
 		Page<ResultTxDto> resultTxDtoPage = resultTxPage.map(ResultTxDto::toDto);
 		return resultTxDtoPage;
+	}
+
+	public ResultTxDetailDto getResultSendingTxDetail(String userId, Long sendingId, Long txId) {
+		Long resultSendingId = findResultSendingId(sendingId);
+		ResultTx resultTx = readResultTxRepository.findByUserIdAndTxId(userId, txId);
+		List<ResultTxTransferDto> resultTxTransferList = resultTxTransferRepository.findByTxId(txId);
+
+		return ResultTxDetailDto.toDto(resultTx,resultTxTransferList);
 	}
 }
