@@ -73,7 +73,10 @@ public class ResultRepositoryCustom {
                 .leftJoin(qResultTxTransfer).on(qResultTx.txId.eq(qResultTxTransfer.txId).and(qResultTx.success.eq(qResultTxTransfer.success)))
                 .where(
                         eqUserId(userId),
-                        eqSendingType(sendingType)
+                        eqSendingType(sendingType),
+                        afterInputTime(startDt),
+                        beforeInputTime(endDt),
+                        eqsSendingStatus(sendingStatus)
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
