@@ -35,7 +35,7 @@ public interface ReadResultTxRepository extends JpaRepository<ResultTx, Long> {
 
 	Page<ResultTx> findByUserIdAndResultSendingId(String userId, Long resultSendingId, Pageable pageable);
 
-	ResultTx findByUserIdAndTxId(String userId, Long txId);
+	ResultTx findByUserIdAndResultSendingIdAndTxId(String userId, Long resultSendingId, Long txId);
 
 
 

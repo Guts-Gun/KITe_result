@@ -178,7 +178,7 @@ public class ResultService {
 
 	public ResultTxDetailDto getResultSendingTxDetail(String userId, Long sendingId, Long txId) {
 		Long resultSendingId = findResultSendingId(sendingId);
-		ResultTx resultTx = readResultTxRepository.findByUserIdAndTxId(userId, txId);
+		ResultTx resultTx = readResultTxRepository.findByUserIdAndResultSendingIdAndTxId(userId, resultSendingId, txId);
 		List<ResultTxTransferDto> resultTxTransferList = resultTxTransferRepository.findByTxId(txId);
 
 		return ResultTxDetailDto.toDto(resultTx,resultTxTransferList);
