@@ -8,9 +8,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransfer, Long> {
+	List<ResultTxTransfer> findByTxIdIn(List<Long> txIds);
+
 
 	@Query(value =
 			"SELECT rs.fk_sending_id as sendingId, AVG(rtt.complete_time - rt.start_time) as avgLatency  " +
