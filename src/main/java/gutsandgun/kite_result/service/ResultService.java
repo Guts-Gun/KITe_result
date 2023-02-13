@@ -1,16 +1,25 @@
 package gutsandgun.kite_result.service;
 
 import gutsandgun.kite_result.dto.*;
+import gutsandgun.kite_result.entity.read.Broker;
+import gutsandgun.kite_result.entity.read.ResultSending;
+import gutsandgun.kite_result.entity.read.ResultTx;
+import gutsandgun.kite_result.entity.read.Sending;
+import gutsandgun.kite_result.querydsl.ResultRepositoryCustom;
 import gutsandgun.kite_result.entity.read.*;
 import gutsandgun.kite_result.projection.ResultTxAvgLatencyProjection;
 import gutsandgun.kite_result.projection.ResultTxSuccessRateProjection;
 import gutsandgun.kite_result.projection.ResultTxTransferStatsProjection;
 import gutsandgun.kite_result.repository.read.*;
+import gutsandgun.kite_result.type.SendingStatus;
+import gutsandgun.kite_result.type.SendingType;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +36,7 @@ public class ResultService {
 	private final ReadBrokerRepository readBrokerRepository;
 	private final ResultTxTransferRepository resultTxTransferRepository;
 
+	private final ResultRepositoryCustom resultRepositoryCustom;
 
 	Long getUsageCap(String userId) {
 		return 100L;
@@ -104,6 +114,7 @@ public class ResultService {
 		System.out.println(resultSendingDtoList);
 		return resultSendingDtoList;
 	}
+
 
 	public ResultSendingDto getResultSending(String userId, Long sendingId) {
 		//없을때 에러 어케 처리할지 정하기
@@ -185,6 +196,15 @@ public class ResultService {
 		Page<ResultTxDto> resultTxDtoPage = resultTxPage.map(ResultTxDto::toDto);
 		return resultTxDtoPage;
 	}
+
+
+	public Page<ResultSendingDto> getFilteredResultSendingList(String userId, SendingType sendingType, String startDt, String endDt, SendingStatus sendingStatus, Pageable pageable) throws ParseException {
+
+		Page<ResultSendingDto> tuplePageList = resultRepositoryCustom.findByRegIdAndSendingTypeAndSuccessAndRegdt(userId, sendingType, startDt, endDt, sendingStatus, pageable);
+		List<ResultSendingDto> list = tuplePageList.getContent();
+		return new PageImpl<>(list, pageable, tuplePageList.getTotalElements());
+	}
+  
 
 	public ResultTxDetailDto getResultSendingTxDetail(String userId, Long sendingId, Long txId) {
 		Long resultSendingId = findResultSendingId(sendingId);

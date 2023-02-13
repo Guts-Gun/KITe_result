@@ -2,6 +2,8 @@ package gutsandgun.kite_result.controller;
 
 import gutsandgun.kite_result.dto.*;
 import gutsandgun.kite_result.service.ResultService;
+import gutsandgun.kite_result.type.SendingStatus;
+import gutsandgun.kite_result.type.SendingType;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
+import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -62,11 +65,17 @@ public class ResultController {
 		return resultService.getResultSendingTx(findUser(principal), pageable, sendingId);
 	}
 
+
+	@GetMapping("/sending/filteredResultList")
+	public Page<ResultSendingDto> getFilteredResultSendingList(
+			Principal principal, SendingType sendingType, String startDt, String endDt, SendingStatus sendingStatus, Pageable pageable) throws ParseException {
+		return resultService.getFilteredResultSendingList(findUser(principal), sendingType, startDt, endDt,sendingStatus, pageable);
+	}
+
+
 	@GetMapping("/sending/result/{sendingId}/tx/{txId}")
 	public ResultTxDetailDto getResultSendingTx(Principal principal, @PathVariable Long sendingId, @PathVariable Long txId) {
 		return resultService.getResultSendingTxDetail(findUser(principal), sendingId, txId);
 	}
-
-
 
 }

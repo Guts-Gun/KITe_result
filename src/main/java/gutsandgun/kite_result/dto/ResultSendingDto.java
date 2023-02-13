@@ -1,5 +1,6 @@
 package gutsandgun.kite_result.dto;
 
+import com.querydsl.core.annotations.QueryProjection;
 import gutsandgun.kite_result.entity.read.ResultSending;
 import gutsandgun.kite_result.type.SendingRuleType;
 import gutsandgun.kite_result.type.SendingStatus;
@@ -8,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * A DTO for the {@link gutsandgun.kite_result.entity.read.ResultSending} entity
@@ -34,6 +36,29 @@ public class ResultSendingDto implements Serializable {
 
 	private final ResultTxSuccessDto resultTxSuccessDto;
 
+
+	@QueryProjection
+	public ResultSendingDto(Long id, String userId, Long sendingId, SendingType sendingType, SendingRuleType sendingRuleType, Boolean success,
+							Long totalMessage, Long failedMessage,  Long avgLatency, Long inputTime,  Long scheduleTime,  Long startTime,
+							Long completeTime,  Long logTime, SendingStatus sendingStatus, ResultTxSuccessDto resultTxSuccessDto){
+
+		this.id = id;
+		this.userId = userId;
+		this.sendingId = sendingId;
+		this.sendingType = sendingType;
+		this.sendingRuleType = sendingRuleType;
+		this.success = success;
+		this.totalMessage = totalMessage;
+		this.failedMessage = failedMessage;
+		this.avgLatency = avgLatency;
+		this.inputTime = inputTime;
+		this.scheduleTime = scheduleTime;
+		this.startTime = startTime;
+		this.completeTime = completeTime;
+		this.logTime = logTime;
+		this.sendingStatus = sendingStatus;
+		this.resultTxSuccessDto = resultTxSuccessDto;
+	}
 
 	public static ResultSendingDto toDto(final ResultSending resultSending, ResultTxSuccessDto resultTxSuccessDto, Long avgLatency) {
 		if (resultTxSuccessDto == null) {
