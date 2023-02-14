@@ -137,7 +137,7 @@ public class ResultService {
 
 		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId);
 		List<ResultTx> resultTxList = readResultTxRepository.findByResultSendingId(resultSending.getId());
-		List<ResultTxTransfer> resultTxTransferList = resultTxTransferRepository.findByTxIdIn(resultTxList.stream().map(ResultTx::getId).collect(Collectors.toList()));
+		List<ResultTxTransfer> resultTxTransferList = resultTxTransferRepository.findByResultTxIdIn(resultTxList.stream().map(ResultTx::getId).collect(Collectors.toList()));
 		List<ResultTxTransferStatsProjection> txTransferAvgLatencyGroupByBrokerId = resultTxTransferRepository.getTxTransferAvgLatencyGroupByBrokerId(resultTxList.stream().map(ResultTx::getId).collect(Collectors.toList()));
 
 
@@ -212,7 +212,7 @@ public class ResultService {
 	public ResultTxDetailDto getResultSendingTxDetail(String userId, Long sendingId, Long txId) {
 		Long resultSendingId = findResultSendingId(sendingId);
 		ResultTx resultTx = readResultTxRepository.findByUserIdAndResultSendingIdAndTxId(userId, resultSendingId, txId);
-		List<ResultTxTransferDto> resultTxTransferList = resultTxTransferRepository.findByTxId(txId);
+		List<ResultTxTransferDto> resultTxTransferList = resultTxTransferRepository.findByResultTxId(resultTx.getId());
 
 		return ResultTxDetailDto.toDto(resultTx, resultTxTransferList);
 	}

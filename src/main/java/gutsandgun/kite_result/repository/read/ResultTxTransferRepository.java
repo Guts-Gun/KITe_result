@@ -8,11 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransfer, Long> {
-	List<ResultTxTransfer> findByTxIdIn(List<Long> txIds);
+	List<ResultTxTransfer> findByResultTxIdIn(List<Long> resultTxIdList);
 
 
 	@Query(value =
@@ -40,7 +39,7 @@ public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransf
 			, nativeQuery = true)
 	List<ResultTxTransferStatsProjection> getTxTransferAvgLatencyGroupByBrokerId(@Param("sendingId") List<Long> sendingId);
 
-	List<ResultTxTransferDto> findByTxId(Long txId);
+	List<ResultTxTransferDto> findByResultTxId(Long txId);
 
 
 

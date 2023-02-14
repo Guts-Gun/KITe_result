@@ -140,6 +140,9 @@ CREATE TABLE result_tx_transfer
     mod_dt          VARCHAR(255)          NULL,
     fk_result_tx_id BIGINT                NULL,
     fk_broker_id    BIGINT                NULL,
+    sending_type    INT                   NULL,
+    sender          VARCHAR(255)          NULL,
+    receiver        VARCHAR(255)          NULL,
     success         BIT(1)                NULL,
     fail_reason     INT                   NULL,
     send_time       BIGINT                NULL,
@@ -336,3 +339,53 @@ CREATE TABLE user_sending_rule
     is_deleted   BIT(1)                NULL,
     CONSTRAINT pk_user_sending_rule PRIMARY KEY (id)
 );
+
+CREATE INDEX idx_address_email_user_address_id ON address_email (fk_user_address_id);
+
+CREATE INDEX idx_address_group_user_group_id ON address_group (fk_user_group_id);
+
+CREATE INDEX idx_address_phone_user_address_id ON address_phone (fk_user_address_id);
+
+CREATE INDEX idx_result_sending_sending_id ON result_sending (fk_sending_id);
+
+CREATE INDEX idx_result_sending_user_id ON result_sending (fk_user_id);
+
+CREATE INDEX idx_result_tx_failure_result_sending_id ON result_tx_failure (fk_result_sending_id);
+
+CREATE INDEX idx_result_tx_failure_tx_id ON result_tx_failure (fk_tx_id);
+
+CREATE INDEX idx_result_tx_failure_user_id ON result_tx_failure (fk_user_id);
+
+CREATE INDEX idx_result_tx_result_sending_id ON result_tx (fk_result_sending_id);
+
+CREATE INDEX idx_result_tx_transfer_result_tx_id ON result_tx_transfer (fk_result_tx_id);
+
+CREATE INDEX idx_result_tx_tx_id ON result_tx (fk_tx_id);
+
+CREATE INDEX idx_result_tx_user_id ON result_tx (fk_user_id);
+
+CREATE INDEX idx_sending_block_receiver ON sending_block (receiver);
+
+CREATE INDEX idx_sending_block_sender ON sending_block (sender);
+
+CREATE INDEX idx_sending_email_sending_id ON sending_email (fk_sending_id);
+
+CREATE INDEX idx_sending_msg_sending_id ON sending_msg (fk_sending_id);
+
+CREATE INDEX idx_sending_rule_sending_id ON sending_rule (fk_sending_id);
+
+CREATE INDEX idx_sending_rule_user_id ON sending_rule (fk_user_id);
+
+CREATE INDEX idx_sending_schedule_time ON sending_schedule (time);
+
+CREATE INDEX idx_sending_user_id ON sending (fk_user_id);
+
+CREATE INDEX idx_user_address_user_id ON user_address (fk_user_id);
+
+CREATE INDEX idx_user_email_user_id ON user_email (fk_user_id);
+
+CREATE INDEX idx_user_group_user_id ON user_group (fk_user_id);
+
+CREATE INDEX idx_user_phone_user_id ON user_phone (fk_user_id);
+
+CREATE INDEX idx_user_sending_rule_user_id ON user_sending_rule (fk_user_id);

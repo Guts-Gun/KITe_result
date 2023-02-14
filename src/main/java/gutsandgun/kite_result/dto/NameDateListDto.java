@@ -13,7 +13,7 @@ public class NameDateListDto {
 	private List data;
 
 
-	public NameDateListDto(List<String> name, List color, List data) {
+	public NameDateListDto(List<String> name, List<String> color, List data) {
 		this.name = name;
 		this.color = color;
 		this.data = data;
