@@ -17,7 +17,8 @@ pipeline {
             dir ('.'){
                 sh """
                 chmod +x gradlew
-                ./gradlew clean compileJava --warning-mode all --exclude-task test
+                ./gradlew clean
+                ./gradlew compileJava --exclude-task test
                 """
             }
           }
