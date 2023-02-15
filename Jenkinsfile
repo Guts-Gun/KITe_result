@@ -16,6 +16,7 @@ pipeline {
             echo 'Bulid Gradle'
             dir ('.'){
                 sh """
+                rm -rf build
                 chmod +x gradlew
                 ./gradlew clean build --exclude-task test
                 """
