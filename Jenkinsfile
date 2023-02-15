@@ -18,7 +18,7 @@ pipeline {
                 sh """
                 rm -rf build
                 chmod +x gradlew
-                ./gradlew clean build --exclude-task test
+                ./gradlew clean compileJava --exclude-task test
                 """
             }
           }
