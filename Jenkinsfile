@@ -17,7 +17,7 @@ pipeline {
             dir ('.'){
                 sh """
                 chmod +x gradlew
-                ./gradlew clean build --exclude-task compileQuerydsl
+                ./gradlew clean build --exclude-task compileQuerydsl test
                 """
             }
           }
