@@ -1,8 +1,8 @@
-buildscript {
-    ext {
-        queryDslVersion = "5.0.0"
-    }
-}
+//buildscript {
+//    ext {
+//        queryDslVersion = "5.0.0"
+//    }
+//}
 
 plugins {
     id 'java'
