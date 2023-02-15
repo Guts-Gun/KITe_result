@@ -63,7 +63,7 @@ public class ResultController {
 	}
 
 
-	@GetMapping("/sending/filteredResultList")
+	@GetMapping("/filteredResultList")
 	public Page<ResultSendingDto> getFilteredResultSendingList(
 														Principal principal,
 														@RequestParam(value = "sendingType", required = false) SendingType sendingType,
