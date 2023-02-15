@@ -18,7 +18,7 @@ pipeline {
                 sh """
                 chmod +x gradlew
                 ./gradlew clean
-                ./gradlew compileJava
+                ./gradlew compileJava --exclude-task compileQuerydsl
                 """
             }
           }
