@@ -11,10 +11,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReadResultSendingRepository extends JpaRepository<ResultSending, Long> {
-	ResultSending findBySendingId(Long sendingId);
+	Optional<ResultSending> findBySendingId(Long sendingId);
 
 	@Query("select r from ResultSending r where r.userId = ?1")
 	List<ResultSending> findAllByUserId(String userId);
@@ -23,7 +24,7 @@ public interface ReadResultSendingRepository extends JpaRepository<ResultSending
 	Page<ResultSending> findByUserId(String userId, Pageable pageable);
 
 
-	ResultSending findByUserIdAndSendingId(String user, Long sendingId);
+	Optional<ResultSending> findByUserIdAndSendingId(String user, Long sendingId);
 
 	@Query(value =
 			"SELECT " +

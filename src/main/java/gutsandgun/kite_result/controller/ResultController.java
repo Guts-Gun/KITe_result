@@ -1,12 +1,15 @@
 package gutsandgun.kite_result.controller;
 
 import gutsandgun.kite_result.dto.*;
+import gutsandgun.kite_result.exception.CustomException;
+import gutsandgun.kite_result.exception.ErrorCode;
 import gutsandgun.kite_result.service.ResultService;
 import gutsandgun.kite_result.type.SendingStatus;
 import gutsandgun.kite_result.type.SendingType;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -21,6 +24,8 @@ public class ResultController {
 
 	String findUser(Principal principal) {
 //		JwtAuthenticationToken token = (JwtAuthenticationToken) principal;
+//		if(token == null)
+//			throw new CustomException(ErrorCode.USER_NOT_FOUND);
 //		String userId = token.getTokenAttributes().get("preferred_username").toString();
 //		System.out.println(userId);
 //		 여긴 나중에

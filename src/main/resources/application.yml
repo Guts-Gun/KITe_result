@@ -3,7 +3,7 @@ server:
 spring:
   readdb:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    jdbc-url: jdbc:mysql://gutsandgun.kro.kr:12010/read?usessl=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    jdbc-url: jdbc:mysql://gutsandgun.kro.kr:12002/read?usessl=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: root
     password: gutsandgun
     hikari:

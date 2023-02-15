@@ -1,15 +1,13 @@
 package gutsandgun.kite_result.service;
 
 import gutsandgun.kite_result.dto.*;
-import gutsandgun.kite_result.entity.read.Broker;
-import gutsandgun.kite_result.entity.read.ResultSending;
-import gutsandgun.kite_result.entity.read.ResultTx;
-import gutsandgun.kite_result.entity.read.Sending;
-import gutsandgun.kite_result.querydsl.ResultRepositoryCustom;
 import gutsandgun.kite_result.entity.read.*;
+import gutsandgun.kite_result.exception.CustomException;
+import gutsandgun.kite_result.exception.ErrorCode;
 import gutsandgun.kite_result.projection.ResultTxAvgLatencyProjection;
 import gutsandgun.kite_result.projection.ResultTxSuccessRateProjection;
 import gutsandgun.kite_result.projection.ResultTxTransferStatsProjection;
+import gutsandgun.kite_result.querydsl.ResultRepositoryCustom;
 import gutsandgun.kite_result.repository.read.*;
 import gutsandgun.kite_result.type.SendingStatus;
 import gutsandgun.kite_result.type.SendingType;
@@ -44,7 +42,7 @@ public class ResultService {
 	}
 
 	Long findResultSendingId(Long sendingId) {
-		return resultSendingRepository.findBySendingId(sendingId).getId();
+		return resultSendingRepository.findBySendingId(sendingId).orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND)).getId();
 	}
 
 	Map<Long, ResultTxSuccessDto> getSuccessCntMap(String userId, List<Long> sendingId) {
@@ -119,7 +117,7 @@ public class ResultService {
 
 	public ResultSendingDto getResultSending(String userId, Long sendingId) {
 		//없을때 에러 어케 처리할지 정하기
-		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId);
+		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId).orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND));
 
 		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(userId, Collections.singletonList(resultSending.getSendingId()));
 		Map<Long, Long> txLatencyAvgMap = getLatencyAvgMap(userId, Collections.singletonList(resultSending.getSendingId()));
@@ -135,7 +133,7 @@ public class ResultService {
 		Map<Long, Broker> brokerMap = readBrokerRepository.findAllMap();
 
 
-		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId);
+		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId).orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND));
 		List<ResultTx> resultTxList = readResultTxRepository.findByResultSendingId(resultSending.getId());
 		List<ResultTxTransfer> resultTxTransferList = resultTxTransferRepository.findByResultTxIdIn(resultTxList.stream().map(ResultTx::getId).collect(Collectors.toList()));
 		List<ResultTxTransferStatsProjection> txTransferAvgLatencyGroupByBrokerId = resultTxTransferRepository.getTxTransferAvgLatencyGroupByBrokerId(resultTxList.stream().map(ResultTx::getId).collect(Collectors.toList()));
@@ -154,7 +152,6 @@ public class ResultService {
 						txTransferAvgLatencyGroupByBrokerId.stream().map(ResultTxTransferStatsProjection -> brokerMap.get(ResultTxTransferStatsProjection.getBrokerId()).getColor()).collect(Collectors.toList()),
 						txTransferAvgLatencyGroupByBrokerId.stream().map(ResultTxTransferStatsProjection::getAvgLatency).collect(Collectors.toList())
 				);
-
 
 
 		//여기 존나 심각 나중에 다시 보기
@@ -207,7 +204,7 @@ public class ResultService {
 		List<ResultSendingDto> list = tuplePageList.getContent();
 		return new PageImpl<>(list, pageable, tuplePageList.getTotalElements());
 	}
-  
+
 
 	public ResultTxDetailDto getResultSendingTxDetail(String userId, Long sendingId, Long txId) {
 		Long resultSendingId = findResultSendingId(sendingId);
