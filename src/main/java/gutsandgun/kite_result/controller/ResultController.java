@@ -23,14 +23,12 @@ public class ResultController {
 	private final ResultService resultService;
 
 	String findUser(Principal principal) {
-//		JwtAuthenticationToken token = (JwtAuthenticationToken) principal;
-//		if(token == null)
-//			throw new CustomException(ErrorCode.USER_NOT_FOUND);
-//		String userId = token.getTokenAttributes().get("preferred_username").toString();
-//		System.out.println(userId);
-//		 여긴 나중에
-//		return(userId);
-		return ("solbitest");
+		JwtAuthenticationToken token = (JwtAuthenticationToken) principal;
+		if(token == null)
+			throw new CustomException(ErrorCode.USER_NOT_FOUND);
+		String userId = token.getTokenAttributes().get("preferred_username").toString();
+		System.out.println(userId);
+		return(userId);
 	}
 
 	@GetMapping("/usage")

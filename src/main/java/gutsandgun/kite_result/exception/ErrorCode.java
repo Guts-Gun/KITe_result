@@ -14,7 +14,7 @@ public enum ErrorCode {
 	TX_NOT_FOUND(404, "T001", "TX를 찾을 수 없습니다."),
 
 	RESULT_SENDING_NOT_FOUND(404, "R001", "발송결과를 찾을 수 없습니다."),
-	RESULT_TX_NOT_FOUND(404, "S002", "발송을 찾을 수 없습니다."),
+	RESULT_TX_NOT_FOUND(404, "S002", "TX결과를 찾을 수 없습니다."),
 	MOL_RU_NOT_FOUND(404, "S999", "암튼 틀림.");
 	private int status;
 	private String code;
