@@ -37,30 +37,30 @@ public class ResultController {
 		return (totalUsageDtoList);
 	}
 
-	@GetMapping("/sending")
+	@GetMapping("/sending/card")
 	public List<SendingShortInfoDto> getTotalSendingShortInfo(Principal principal) {
 		List<SendingShortInfoDto> sendingShortInfoDtoList = resultService.getTotalSendingShortInfo(findUser(principal));
 		return (sendingShortInfoDtoList);
 	}
 
-	@GetMapping("/sending/result")
+	@GetMapping("/sending")
 	public Page<ResultSendingDto> getTotalResultSending(Principal principal, Pageable pageable) {
 		return resultService.getTotalResultSending(findUser(principal), pageable);
 	}
 
-	@GetMapping("/sending/result/{sendingId}")
+	@GetMapping("/sending/{sendingId}")
 	public ResultSendingDto getResultSending(Principal principal, @PathVariable Long sendingId) {
 		ResultSendingDto resultSendingDto = resultService.getResultSending(findUser(principal), sendingId);
 		return resultSendingDto;
 	}
 
-	@GetMapping("/sending/result/{sendingId}/broker")
+	@GetMapping("/sending/{sendingId}/broker")
 	public ResultBrokerDto getResultSendingBroker(Principal principal, @PathVariable Long sendingId) {
 		ResultBrokerDto resultBrokerDto = resultService.getResultSendingBroker(findUser(principal), sendingId);
 		return resultBrokerDto;
 	}
 
-	@GetMapping("/sending/result/{sendingId}/tx")
+	@GetMapping("/sending/{sendingId}/tx")
 	public Page<ResultTxDto> getResultSendingTx(Principal principal, Pageable pageable, @PathVariable Long sendingId) {
 		return resultService.getResultSendingTx(findUser(principal), pageable, sendingId);
 	}
@@ -78,7 +78,7 @@ public class ResultController {
 	}
 
 
-	@GetMapping("/sending/result/{sendingId}/tx/{txId}")
+	@GetMapping("/sending/{sendingId}/tx/{txId}")
 	public ResultTxDetailDto getResultSendingTx(Principal principal, @PathVariable Long sendingId, @PathVariable Long txId) {
 		return resultService.getResultSendingTxDetail(findUser(principal), sendingId, txId);
 	}

@@ -2,6 +2,7 @@ package gutsandgun.kite_result.dto;
 
 import com.querydsl.core.annotations.QueryProjection;
 import gutsandgun.kite_result.entity.read.ResultSending;
+import gutsandgun.kite_result.entity.read.Sending;
 import gutsandgun.kite_result.type.SendingRuleType;
 import gutsandgun.kite_result.type.SendingStatus;
 import gutsandgun.kite_result.type.SendingType;
@@ -60,7 +61,7 @@ public class ResultSendingDto implements Serializable {
 		this.resultTxSuccessDto = resultTxSuccessDto;
 	}
 
-	public static ResultSendingDto toDto(final ResultSending resultSending, ResultTxSuccessDto resultTxSuccessDto, Long avgLatency) {
+	public static ResultSendingDto toDto(Sending sending, ResultSending resultSending, ResultTxSuccessDto resultTxSuccessDto, Long avgLatency) {
 		if (resultTxSuccessDto == null) {
 			resultTxSuccessDto = new ResultTxSuccessDto(resultSending.getSendingId(), 0, 0);
 		}
@@ -68,17 +69,17 @@ public class ResultSendingDto implements Serializable {
 			avgLatency = 0L;
 
 		return ResultSendingDto.builder()
-				.id(resultSending.getId())
-				.userId(resultSending.getUserId())
-				.sendingId(resultSending.getSendingId())
-				.sendingType(resultSending.getSendingType())
-				.sendingRuleType(resultSending.getSendingRuleType())
+				.id(sending.getId())
+				.userId(sending.getUserId())
+				.sendingId(sending.getId())
+				.sendingType(sending.getSendingType())
+				.sendingRuleType(sending.getSendingRuleType())
 				.success(resultSending.getSuccess())
-				.totalMessage(resultSending.getTotalMessage())
+				.totalMessage(sending.getTotalMessage())
 				.failedMessage(resultSending.getFailedMessage())
 				.avgLatency(avgLatency)
-				.inputTime(resultSending.getInputTime())
-				.scheduleTime(resultSending.getScheduleTime())
+				.inputTime(sending.getInputTime())
+				.scheduleTime(sending.getScheduleTime())
 				.startTime(resultSending.getStartTime())
 				.completeTime(resultSending.getCompleteTime())
 				.logTime(resultSending.getLogTime())

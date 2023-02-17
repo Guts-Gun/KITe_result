@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -33,7 +34,10 @@ public interface ReadResultTxRepository extends JpaRepository<ResultTx, Long> {
 	List<ResultTxSuccessRateProjection> getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(@Param("userId") String userId, @Param("sendingId") List<Long> sendingId);
 
 
-	Page<ResultTx> findByUserIdAndResultSendingId(String userId, Long resultSendingId, Pageable pageable);
+	List<ResultTx> findByUserIdAndResultSendingId(String userId, Long resultSendingId);
+
+	List<ResultTx> findByUserIdAndTxIdIn(String userId, Collection<Long> txIds);
+
 
 	ResultTx findByUserIdAndResultSendingIdAndTxId(String userId, Long resultSendingId, Long txId);
 

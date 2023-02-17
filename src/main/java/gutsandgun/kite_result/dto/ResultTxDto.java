@@ -1,6 +1,7 @@
 package gutsandgun.kite_result.dto;
 
 import gutsandgun.kite_result.entity.read.ResultTx;
+import gutsandgun.kite_result.entity.read.SendingMsg;
 import gutsandgun.kite_result.type.FailReason;
 import gutsandgun.kite_result.type.SendingType;
 import lombok.Builder;
@@ -33,16 +34,18 @@ public class ResultTxDto implements Serializable {
 	private final Long sendTime;
 	private final Long completeTime;
 
-	public static ResultTxDto toDto(ResultTx resultTx) {
+	public static ResultTxDto toDto(SendingMsg sendingMsg, ResultTx resultTx) {
+		if(resultTx == null)
+			resultTx = new ResultTx();
 		return ResultTxDto.builder()
-				.id(resultTx.getId())
-				.userId(resultTx.getUserId())
+				.id(sendingMsg.getId())
+				.userId(sendingMsg.getRegId())
 				.resultSendingId(resultTx.getResultSendingId())
-				.txId(resultTx.getTxId())
+				.txId(sendingMsg.getId())
 				.brokerId(resultTx.getBrokerId())
 				.sendingType(resultTx.getSendingType())
-				.sender(resultTx.getSender())
-				.receiver(resultTx.getReceiver())
+				.sender(sendingMsg.getSender())
+				.receiver(sendingMsg.getReceiver())
 				.success(resultTx.getSuccess())
 				.failReason(resultTx.getFailReason())
 				.title(resultTx.getTitle())

@@ -34,6 +34,7 @@ public class ResultService {
 	private final ReadResultTxRepository readResultTxRepository;
 	private final ReadBrokerRepository readBrokerRepository;
 	private final ResultTxTransferRepository resultTxTransferRepository;
+	private final ReadSendingMsgRepository sendingMsgRepository;
 
 	private final ResultRepositoryCustom resultRepositoryCustom;
 
@@ -76,6 +77,9 @@ public class ResultService {
 				.stream()
 				.map(totalUsage -> new TotalUsageDto(totalUsage.getSendingType(), totalUsage.getTotalUsage(), getUsageCap(userId)))
 				.collect(Collectors.toList());
+		if (totalUsageDtoList.size() == 0) {
+			totalUsageDtoList.add(new TotalUsageDto(SendingType.SMS, 0L, getUsageCap(userId)));
+		}
 
 		return totalUsageDtoList;
 	}
@@ -103,13 +107,17 @@ public class ResultService {
 	}
 
 	public Page<ResultSendingDto> getTotalResultSending(String userId, Pageable pageable) {
+
 		Page<ResultSending> resultSendingPage = resultSendingRepository.findByUserId(userId, pageable);
 
+		Map<Long, Sending> sendingMap = readSendingRepository.findByUserIdAndIdIn(userId, resultSendingPage.getContent().stream().map(ResultSending::getSendingId).collect(Collectors.toList()))
+				.stream()
+				.collect(Collectors.toMap(Sending::getId, Function.identity()));
 		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(userId, resultSendingPage.stream().map(ResultSending::getSendingId).toList());
 
 		Map<Long, Long> txLatencyAvgMap = getLatencyAvgMap(userId, resultSendingPage.stream().map(ResultSending::getSendingId).toList());
 
-		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(resultSending -> ResultSendingDto.toDto(resultSending, successDtoMap.get(resultSending.getSendingId()), txLatencyAvgMap.get(resultSending.getSendingId())));
+		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(resultSending -> ResultSendingDto.toDto(sendingMap.get(resultSending.getSendingId()), resultSending, successDtoMap.get(resultSending.getSendingId()), txLatencyAvgMap.get(resultSending.getSendingId())));
 		System.out.println(resultSendingDtoList);
 		return resultSendingDtoList;
 	}
@@ -117,13 +125,15 @@ public class ResultService {
 
 	public ResultSendingDto getResultSending(String userId, Long sendingId) {
 		//없을때 에러 어케 처리할지 정하기
-		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId).orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND));
+		Sending sending = readSendingRepository.findByIdAndUserId(sendingId, userId).orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND));
+		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId).orElse(new ResultSending());
+//				.orElseThrow( /*new CustomException(ErrorCode.RESULT_SENDING_NOT_FOUND*/);
 
 		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(userId, Collections.singletonList(resultSending.getSendingId()));
 		Map<Long, Long> txLatencyAvgMap = getLatencyAvgMap(userId, Collections.singletonList(resultSending.getSendingId()));
 
 
-		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(resultSending, successDtoMap.get(resultSending.getSendingId()), txLatencyAvgMap.get(resultSending.getSendingId()));
+		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(sending, resultSending, successDtoMap.get(resultSending.getSendingId()), txLatencyAvgMap.get(resultSending.getSendingId()));
 		System.out.println(resultSendingDto);
 		return resultSendingDto;
 	}
@@ -133,7 +143,8 @@ public class ResultService {
 		Map<Long, Broker> brokerMap = readBrokerRepository.findAllMap();
 
 
-		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId).orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND));
+		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId).orElse(new ResultSending());
+//				.orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND));
 		List<ResultTx> resultTxList = readResultTxRepository.findByResultSendingId(resultSending.getId());
 		List<ResultTxTransfer> resultTxTransferList = resultTxTransferRepository.findByResultTxIdIn(resultTxList.stream().map(ResultTx::getId).collect(Collectors.toList()));
 		List<ResultTxTransferStatsProjection> txTransferAvgLatencyGroupByBrokerId = resultTxTransferRepository.getTxTransferAvgLatencyGroupByBrokerId(resultTxList.stream().map(ResultTx::getId).collect(Collectors.toList()));
@@ -190,8 +201,12 @@ public class ResultService {
 	}
 
 	public Page<ResultTxDto> getResultSendingTx(String userId, Pageable pageable, Long sendingId) {
-		Page<ResultTx> resultTxPage = readResultTxRepository.findByUserIdAndResultSendingId(userId, findResultSendingId(sendingId), pageable);
-		Page<ResultTxDto> resultTxDtoPage = resultTxPage.map(ResultTxDto::toDto);
+		Page<SendingMsg> sendingMsgPage = sendingMsgRepository.findBySendingId(sendingId, pageable);
+		Map<Long, ResultTx> resultTxMap = readResultTxRepository.findByUserIdAndTxIdIn(userId, sendingMsgPage.stream().map(SendingMsg::getId).collect(Collectors.toList()))
+				.stream().collect(Collectors.toMap(ResultTx::getTxId, Function.identity()));
+
+		Page<ResultTxDto> resultTxDtoPage = sendingMsgPage.map(SendingMsg -> ResultTxDto.toDto(SendingMsg, resultTxMap.get(SendingMsg.getId())));
+
 		return resultTxDtoPage;
 	}
 
@@ -207,10 +222,11 @@ public class ResultService {
 
 
 	public ResultTxDetailDto getResultSendingTxDetail(String userId, Long sendingId, Long txId) {
+		SendingMsg sendingMsg = sendingMsgRepository.findById(txId).orElseThrow(() -> new CustomException(ErrorCode.RESULT_SENDING_NOT_FOUND));
 		Long resultSendingId = findResultSendingId(sendingId);
 		ResultTx resultTx = readResultTxRepository.findByUserIdAndResultSendingIdAndTxId(userId, resultSendingId, txId);
 		List<ResultTxTransferDto> resultTxTransferList = resultTxTransferRepository.findByResultTxId(resultTx.getId());
 
-		return ResultTxDetailDto.toDto(resultTx, resultTxTransferList);
+		return ResultTxDetailDto.toDto(sendingMsg, resultTx, resultTxTransferList);
 	}
 }
