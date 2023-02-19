@@ -1,6 +1,26 @@
 server:
   port: 8002
+
+rabbitmq:
+  api:
+    port: 10005
+    queue: /api/queues
+    queue-detail: /api/queues/
+    auth: Z3V0c2FuZGd1bjpndXRzYW5kZ3Vu  #gutsandgun.kro.kr
+  #    auth: c29sYml0ZXN0OnNvbGJpdGVzdDEyMTIh  #172.16.226.148
+  log:
+    name: LogQueue
+    exchange: Log-exchange
+  routing:
+    key:
+      log: LogQueue
 spring:
+  rabbitmq:
+    host: gutsandgun.kro.kr
+    port: 11005
+    username: gutsandgun
+    password: gutsandgun
+    virtual-host: gutsandgun
   readdb:
     driver-class-name: com.mysql.cj.jdbc.Driver
     jdbc-url: jdbc:mysql://gutsandgun.kro.kr:12002/read?usessl=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
