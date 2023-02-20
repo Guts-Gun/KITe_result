@@ -17,7 +17,6 @@ public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransf
 //	ResultTxTransfer findFirstByResultTxIdOrderByCompleteTimeDesc(Long resultTxId);
 
 
-
 	List<ResultTxTransfer> findByResultTxIdIn(List<Long> resultTxIdList);
 
 
@@ -34,6 +33,18 @@ public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransf
 	)
 	List<ResultTxAvgLatencyProjection> getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(@Param("sendingId") List<Long> sendingId);
 
+	@Query(value =
+			"SELECT rs.fk_sending_id as sendingId, AVG(rtt.send_time - rt.start_time) as avgLatency  " +
+					"from result_sending as rs," +
+					"     result_tx as rt, " +
+					"     result_tx_transfer as rtt " +
+					"where rs.fk_sending_id In :sendingId " +
+					"  and rs.id = rt.fk_result_sending_id" +
+					"  and rt.id = rtt.fk_result_tx_id " +
+					"group by rs.fk_sending_id"
+			, nativeQuery = true
+	)
+	List<ResultTxAvgLatencyProjection> getTxAvgLatencyBtwStartAndQueGroupByResultSendingByUserIdAndSendingId(@Param("sendingId") List<Long> sendingId);
 
 	@Query(value =
 			"select fk_broker_id as brokerId, " +
@@ -46,9 +57,6 @@ public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransf
 	List<ResultTxTransferStatsProjection> getTxTransferAvgLatencyGroupByBrokerId(@Param("sendingId") List<Long> sendingId);
 
 	List<ResultTxTransferDto> findByResultTxId(Long txId);
-
-
-
 
 
 }

@@ -75,10 +75,39 @@ public class ResultService {
 //				));
 //	}
 
+
+	// 나중에 이거로 바꿔두기
 	Map<Long, Long> getLatencyAvgMap(List<Long> sendingId) {
 
 		Map<Long, Long> txLatencyAvgProjectionMap
 				= resultTxTransferRepository.getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(sendingId)
+				.stream()
+				.collect(Collectors.toMap(ResultTxAvgLatencyProjection::getSendingId,
+						resultTxAvgLatencyProjection -> {
+							if (resultTxAvgLatencyProjection.getAvgLatency() != null)
+								return resultTxAvgLatencyProjection.getAvgLatency();
+							else
+								return 0L;
+						}));
+
+		Map<Long, Long> txLatencyAvgMap = sendingId
+				.stream()
+				.collect(Collectors.toMap(key -> key, key ->
+				{
+					if (txLatencyAvgProjectionMap.containsKey(key))
+						return txLatencyAvgProjectionMap.get(key);
+					else
+						return 0L;
+				}));
+
+
+		return txLatencyAvgMap;
+	}
+
+	Map<Long, Long> getQueLatencyAvgMap(List<Long> sendingId) {
+
+		Map<Long, Long> txLatencyAvgProjectionMap
+				= resultTxTransferRepository.getTxAvgLatencyBtwStartAndQueGroupByResultSendingByUserIdAndSendingId(sendingId)
 				.stream()
 				.collect(Collectors.toMap(ResultTxAvgLatencyProjection::getSendingId,
 						resultTxAvgLatencyProjection -> {
@@ -125,7 +154,8 @@ public class ResultService {
 		} else {
 			resultSending.setSuccess(Boolean.TRUE);
 		}
-		Long avgLatency = getLatencyAvgMap(singletonList(sending.getId())).get(sending.getId());
+//		Long avgLatency = getLatencyAvgMap(singletonList(sending.getId())).get(sending.getId());
+		Long avgLatency = getQueLatencyAvgMap(singletonList(sending.getId())).get(sending.getId());
 		resultSending.setAvgLatency(Float.valueOf(avgLatency));
 
 		//여기 하기
