@@ -14,6 +14,7 @@ public class ResultTxTransferDto implements Serializable {
 	private final Long id;
 	private final Long resultTxId;
 	private final Long brokerId;
+	private String brokerName;
 	private final SendingType sendingType;
 	private final String sender;
 	private final String receiver;

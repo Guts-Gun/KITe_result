@@ -7,6 +7,7 @@ import gutsandgun.kite_result.exception.ErrorCode;
 import gutsandgun.kite_result.projection.ResultTxAvgLatencyProjection;
 import gutsandgun.kite_result.projection.ResultTxSuccessRateProjection;
 import gutsandgun.kite_result.projection.ResultTxTransferStatsProjection;
+import gutsandgun.kite_result.publisher.RabbitMQProducer;
 import gutsandgun.kite_result.querydsl.ResultRepositoryCustom;
 import gutsandgun.kite_result.repository.read.*;
 import gutsandgun.kite_result.type.SendingStatus;
@@ -19,19 +20,19 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.util.Collections.singletonList;
 
 @Service
 @AllArgsConstructor
 public class ResultService {
+	private final RabbitMQProducer rabbitMQProducer;
 	private final ReadSendingRepository readSendingRepository;
 	private final ReadResultSendingRepository resultSendingRepository;
-	private final ReadResultTxRepository readResultTxRepository;
+	private final ReadResultTxRepository resultTxRepository;
 	private final ReadBrokerRepository readBrokerRepository;
 	private final ResultTxTransferRepository resultTxTransferRepository;
 	private final ReadSendingMsgRepository sendingMsgRepository;
@@ -42,34 +43,141 @@ public class ResultService {
 		return 100L;
 	}
 
-	Long findResultSendingId(Long sendingId) {
-		return resultSendingRepository.findBySendingId(sendingId).orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND)).getId();
+	ResultSending findResultSendingId(Long sendingId) {
+		return resultSendingRepository.findBySendingId(sendingId).orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND));
 	}
 
-	Map<Long, ResultTxSuccessDto> getSuccessCntMap(String userId, List<Long> sendingId) {
+	Map<Long, ResultTxSuccessDto> getSuccessCntMap(List<Long> sendingId) {
 
 		Map<Long, List<ResultTxSuccessRateProjection>> successCountProjectionMap =
-				resultSendingRepository.getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(userId, sendingId)
+				resultSendingRepository.getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(sendingId)
 						.stream()
 						.collect(Collectors.groupingBy(ResultTxSuccessRateProjection::getSendingId));
 
-		Map<Long, ResultTxSuccessDto> successDtoMap = successCountProjectionMap.keySet()
+		Map<Long, ResultTxSuccessDto> successDtoMap = sendingId
 				.stream()
-				.collect(Collectors.toMap(key -> key, key -> new ResultTxSuccessDto(key, successCountProjectionMap.get(key))));
-
+				.collect(Collectors.toMap(key -> key, key -> {
+					if (successCountProjectionMap.containsKey(key))
+						return new ResultTxSuccessDto(key, successCountProjectionMap.get(key));
+					else
+						return new ResultTxSuccessDto(key, 0, 0);
+				}));
 		return successDtoMap;
 	}
 
-	Map<Long, Long> getLatencyAvgMap(String userId, List<Long> sendingId) {
+//	Map<Long, Long> getLatencyAvgMap(List<Long> sendingIds) {
+//		List<ResultTxAvgLatencyProjection> latencyProjections = resultTxTransferRepository.getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(sendingIds);
+//
+//		return latencyProjections.stream()
+//				.collect(Collectors.toMap(
+//						ResultTxAvgLatencyProjection::getSendingId,
+//						projection -> Optional.ofNullable(projection.getAvgLatency()).orElse(0L)
+//				));
+//	}
 
-		Map<Long, Long> txLatencyAvgMap
-				= resultTxTransferRepository.getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(userId, sendingId)
+	Map<Long, Long> getLatencyAvgMap(List<Long> sendingId) {
+
+		Map<Long, Long> txLatencyAvgProjectionMap
+				= resultTxTransferRepository.getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(sendingId)
 				.stream()
-				.collect(Collectors.toMap(ResultTxAvgLatencyProjection::getSendingId, ResultTxAvgLatencyProjection::getAvgLatency));
+				.collect(Collectors.toMap(ResultTxAvgLatencyProjection::getSendingId,
+						resultTxAvgLatencyProjection -> {
+							if (resultTxAvgLatencyProjection.getAvgLatency() != null)
+								return resultTxAvgLatencyProjection.getAvgLatency();
+							else
+								return 0L;
+						}));
+
+		Map<Long, Long> txLatencyAvgMap = sendingId
+				.stream()
+				.collect(Collectors.toMap(key -> key, key ->
+				{
+					if (txLatencyAvgProjectionMap.containsKey(key))
+						return txLatencyAvgProjectionMap.get(key);
+					else
+						return 0L;
+				}));
+
 
 		return txLatencyAvgMap;
 	}
 
+
+	Boolean checkSendingCompleteNotChecked(ResultSending resultSending) {
+		if (resultSending.getSendingStatus() == SendingStatus.SENDING)
+			return resultSending.getTotalMessage() == resultTxRepository.countByResultSendingIdAndSuccessNotNull(resultSending.getId());
+		else
+			return false;
+	}
+
+	ResultSending getCurrentSendingResultStatus(Sending sending, ResultSending resultSending) {
+//		ResultSending resultSending = findResultSendingId(sending.getId());
+		System.out.println("check sending id : " + sending.getId());
+		List<Long> resultTxIdList = resultTxRepository.findByResultSendingId(resultSending.getId()).stream().map(ResultTx::getId).collect(Collectors.toList());
+
+		Long failCnt = getSuccessCntMap(singletonList(sending.getId())).get(sending.getId()).getFailCnt();
+		resultSending.setFailedMessage(failCnt);
+
+
+		if (failCnt == resultSending.getTotalMessage()) {
+			resultSending.setSuccess(Boolean.FALSE);
+			resultSending.setSendingStatus(SendingStatus.FAIL);
+		} else {
+			resultSending.setSuccess(Boolean.TRUE);
+		}
+		Long avgLatency = getLatencyAvgMap(singletonList(sending.getId())).get(sending.getId());
+		resultSending.setAvgLatency(Float.valueOf(avgLatency));
+
+		//여기 하기
+//		long completeTime = resultTxTransferRepository.findFirstByResultTxIdInOrderByCompleteTimeDesc(resultTxIdList)
+//				.orElseGet(() -> {
+//					ResultTxTransfer resultTxTransfer = new ResultTxTransfer();
+//					resultTxTransfer.setCompleteTime(0L);
+//					return resultTxTransfer;
+//				}).getCompleteTime();
+//
+//		resultSending.setCompleteTime(completeTime);
+		long completeTime = resultTxTransferRepository.findFirstByResultTxIdInOrderByCompleteTimeDesc(resultTxIdList)
+				.map(ResultTxTransfer::getCompleteTime)
+				.orElse(0L);
+
+		resultSending.setCompleteTime(completeTime);
+
+
+		if (checkSendingCompleteNotChecked(resultSending)) {
+			resultSending.setSendingStatus(SendingStatus.COMPLETE);
+			rabbitMQProducer.logSendQueue("Service: Result, type: " + resultSending.getSendingStatus().toString().toUpperCase() + ", resultSendingId: " + resultSending.getId() + ", success: " + resultSending.getSuccess().toString() + ", failedMessage: " + resultSending.getFailedMessage() + ", avgLatency: " + resultSending.getAvgLatency() + ", completeTime: " + resultSending.getCompleteTime() + ", time: " + new Date().getTime() + "@");
+//			System.out.println("Service: Result, type: " + resultSending.getSendingStatus().toString().toUpperCase() + ", resultSendingId: " + resultSending.getId() + ", success: " + resultSending.getSuccess().toString() + ", failedMessage: " + resultSending.getFailedMessage() + ", avgLatency: " + resultSending.getAvgLatency() + ", completeTime: " + resultSending.getCompleteTime() + ", time: " + new Date().getTime() + "@");
+		}
+
+		return resultSending;
+	}
+
+	//result 조회할때 한번씩 체크하도록 반영하기
+	public Map<Long, ResultSending> findResultSendingInSendingIdList(List<Sending> sendingList) {
+
+		Map<Long, ResultSending> resultSendingMap = resultSendingRepository.findBySendingIdIn(sendingList.stream().map(Sending::getId).collect(Collectors.toList()))
+				.stream()
+				.collect(Collectors.toMap(ResultSending::getSendingId, Function.identity(), (p1, p2) -> p1));
+
+		for (Sending sending : sendingList) {
+			ResultSending resultSending = resultSendingMap.get(sending.getId());
+
+			if (resultSending == null)
+				resultSending = new ResultSending();
+			switch (resultSending.getSendingStatus()) {
+				case COMPLETE, PENDING, FAIL, DELAY:
+					break;
+				case SENDING:
+					resultSending = getCurrentSendingResultStatus(sending, resultSending);
+					resultSendingMap.put(resultSending.getSendingId(), resultSending);
+					break;
+			}
+		}
+
+
+		return resultSendingMap;
+	}
 
 	public List<TotalUsageDto> getTotalUsage(String userId) {
 
@@ -88,12 +196,12 @@ public class ResultService {
 	public List<SendingShortInfoDto> getTotalSendingShortInfo(String userId) {
 
 		List<Sending> sendingList = readSendingRepository.findByUserId(userId);
+		if (sendingList.size() == 0)
+			return new ArrayList<>();
 
-		Map<Long, ResultSending> resultSendingMap = resultSendingRepository.findAllByUserId(userId)
-				.stream()
-				.collect(Collectors.toMap(ResultSending::getSendingId, Function.identity()));
+		Map<Long, ResultSending> resultSendingMap = findResultSendingInSendingIdList(sendingList);
 
-		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(userId, sendingList.stream().map(Sending::getId).toList());
+		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(sendingList.stream().map(Sending::getId).toList());
 
 
 		List<SendingShortInfoDto> sendingShortInfoDtoList = sendingList.stream()
@@ -113,11 +221,11 @@ public class ResultService {
 		Map<Long, Sending> sendingMap = readSendingRepository.findByUserIdAndIdIn(userId, resultSendingPage.getContent().stream().map(ResultSending::getSendingId).collect(Collectors.toList()))
 				.stream()
 				.collect(Collectors.toMap(Sending::getId, Function.identity()));
-		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(userId, resultSendingPage.stream().map(ResultSending::getSendingId).toList());
+		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(resultSendingPage.stream().map(ResultSending::getSendingId).toList());
 
-		Map<Long, Long> txLatencyAvgMap = getLatencyAvgMap(userId, resultSendingPage.stream().map(ResultSending::getSendingId).toList());
+		Map<Long, Long> txLatencyAvgMap = getLatencyAvgMap(resultSendingPage.stream().map(ResultSending::getSendingId).toList());
 
-		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(resultSending -> ResultSendingDto.toDto(sendingMap.get(resultSending.getSendingId()), resultSending, successDtoMap.get(resultSending.getSendingId()), txLatencyAvgMap.get(resultSending.getSendingId())));
+		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(resultSending -> ResultSendingDto.toDto(sendingMap.get(resultSending.getSendingId()), resultSending, successDtoMap.get(resultSending.getSendingId())));
 		System.out.println(resultSendingDtoList);
 		return resultSendingDtoList;
 	}
@@ -126,15 +234,15 @@ public class ResultService {
 	public ResultSendingDto getResultSending(String userId, Long sendingId) {
 		//없을때 에러 어케 처리할지 정하기
 		Sending sending = readSendingRepository.findByIdAndUserId(sendingId, userId).orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND));
-		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId).orElse(new ResultSending());
+		ResultSending resultSending = findResultSendingInSendingIdList(singletonList(sending)).get(sending.getId());
 //				.orElseThrow( /*new CustomException(ErrorCode.RESULT_SENDING_NOT_FOUND*/);
 
-		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(userId, Collections.singletonList(resultSending.getSendingId()));
-		Map<Long, Long> txLatencyAvgMap = getLatencyAvgMap(userId, Collections.singletonList(resultSending.getSendingId()));
+
+		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(singletonList(resultSending.getSendingId()));
 
 
-		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(sending, resultSending, successDtoMap.get(resultSending.getSendingId()), txLatencyAvgMap.get(resultSending.getSendingId()));
-		System.out.println(resultSendingDto);
+		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(sending, resultSending, successDtoMap.get(resultSending.getSendingId()));
+//		System.out.println(resultSendingDto);
 		return resultSendingDto;
 	}
 
@@ -145,7 +253,7 @@ public class ResultService {
 
 		ResultSending resultSending = resultSendingRepository.findByUserIdAndSendingId(userId, sendingId).orElse(new ResultSending());
 //				.orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND));
-		List<ResultTx> resultTxList = readResultTxRepository.findByResultSendingId(resultSending.getId());
+		List<ResultTx> resultTxList = resultTxRepository.findByResultSendingId(resultSending.getId());
 		List<ResultTxTransfer> resultTxTransferList = resultTxTransferRepository.findByResultTxIdIn(resultTxList.stream().map(ResultTx::getId).collect(Collectors.toList()));
 		List<ResultTxTransferStatsProjection> txTransferAvgLatencyGroupByBrokerId = resultTxTransferRepository.getTxTransferAvgLatencyGroupByBrokerId(resultTxList.stream().map(ResultTx::getId).collect(Collectors.toList()));
 
@@ -165,48 +273,52 @@ public class ResultService {
 				);
 
 
-		//여기 존나 심각 나중에 다시 보기
-		Map<Long, Map<Boolean, Long>> brokerSuccessFail;
-		brokerSuccessFail = resultTxTransferList.stream()
-				.collect(Collectors.groupingBy(resultTxTransfer -> resultTxTransfer.getBrokerId(),
-						Collectors.groupingBy(resultTxTransfer -> resultTxTransfer.getSuccess(), Collectors.counting())));
+		List<String> brokerNames = new ArrayList<>();
+		List<String> brokerColors = new ArrayList<>();
+		List<Long> brokerSuccessFailCounts = new ArrayList<>();
+
+		try {
+			//여기 존나 심각 나중에 다시 보기
+			Map<Long, Map<Boolean, Long>> brokerSuccessFail;
+			brokerSuccessFail = resultTxTransferList.stream()
+					.collect(Collectors.groupingBy(resultTxTransfer -> resultTxTransfer.getBrokerId(),
+							Collectors.groupingBy(resultTxTransfer -> resultTxTransfer.getSuccess(), Collectors.counting())));
 
 
-		List<String> tempName = new ArrayList<>();
-		List<String> tempColor = new ArrayList<>();
-		List<Long> tempData = new ArrayList<>();
+			for (Long key : brokerSuccessFail.keySet().stream().toList()) {
+				Map<Boolean, Long> tempCnt = brokerSuccessFail.get(key);
+				brokerNames.add(brokerMap.get(key).getName() + "- 성공");
+				brokerColors.add(brokerMap.get(key).getColor());
+				brokerSuccessFailCounts.add(tempCnt.getOrDefault(Boolean.TRUE, 0L));
 
-		for (Long key : brokerSuccessFail.keySet().stream().toList()) {
-			Map<Boolean, Long> tempCnt = brokerSuccessFail.get(key);
-			tempName.add(brokerMap.get(key).getName() + "- 성공");
-			tempColor.add(brokerMap.get(key).getColor());
-			if (tempCnt.containsKey(Boolean.TRUE))
-				tempData.add(tempCnt.get(Boolean.TRUE));
-			else
-				tempData.add(0L);
-
-			tempName.add(brokerMap.get(key).getName() + "- 실패");
-			tempColor.add(brokerMap.get(key).getColor());
-			if (tempCnt.containsKey(Boolean.FALSE))
-				tempData.add(tempCnt.get(Boolean.FALSE));
-			else
-				tempData.add(0L);
+				brokerNames.add(brokerMap.get(key).getName() + "- 실패");
+				brokerColors.add(brokerMap.get(key).getColor());
+				brokerSuccessFailCounts.add(tempCnt.getOrDefault(Boolean.FALSE, 0L));
+			}
+		} catch (NullPointerException e) {
+			System.out.println("resultTxTransferList Missing Sending id : " + sendingId);
 		}
 
-		NameDateListDto temp = new NameDateListDto(tempName, tempColor, tempData);
+		NameDateListDto brokerSuccessFailDto = new NameDateListDto(brokerNames, brokerColors, brokerSuccessFailCounts);
 
 
-		ResultBrokerDto resultBrokerDto = new ResultBrokerDto(sendingId, brokerCount, temp, brokerSpeed);
+		ResultBrokerDto resultBrokerDto = new ResultBrokerDto(sendingId, brokerCount, brokerSuccessFailDto, brokerSpeed);
 		return resultBrokerDto;
 	}
 
 	public Page<ResultTxDto> getResultSendingTx(String userId, Pageable pageable, Long sendingId) {
+		Map<Long, Broker> brokerMap = readBrokerRepository.findAllMap();
+
 		Page<SendingMsg> sendingMsgPage = sendingMsgRepository.findBySendingId(sendingId, pageable);
-		Map<Long, ResultTx> resultTxMap = readResultTxRepository.findByUserIdAndTxIdIn(userId, sendingMsgPage.stream().map(SendingMsg::getId).collect(Collectors.toList()))
+		Map<Long, ResultTx> resultTxMap = resultTxRepository.findByUserIdAndTxIdIn(userId, sendingMsgPage.stream().map(SendingMsg::getId).collect(Collectors.toList()))
 				.stream().collect(Collectors.toMap(ResultTx::getTxId, Function.identity()));
 
-		Page<ResultTxDto> resultTxDtoPage = sendingMsgPage.map(SendingMsg -> ResultTxDto.toDto(SendingMsg, resultTxMap.get(SendingMsg.getId())));
-
+		Page<ResultTxDto> resultTxDtoPage = Page.empty();
+		try {
+			resultTxDtoPage = sendingMsgPage.map(SendingMsg -> ResultTxDto.toDto(SendingMsg, resultTxMap.get(SendingMsg.getId()), brokerMap.get(resultTxMap.get(SendingMsg.getId()).getBrokerId()).getName()));
+		} catch (Exception e) {
+			System.out.println("getResultSendingTx null exception Sending Id : " + sendingId);
+		}
 		return resultTxDtoPage;
 	}
 
@@ -222,11 +334,20 @@ public class ResultService {
 
 
 	public ResultTxDetailDto getResultSendingTxDetail(String userId, Long sendingId, Long txId) {
-		SendingMsg sendingMsg = sendingMsgRepository.findById(txId).orElseThrow(() -> new CustomException(ErrorCode.RESULT_SENDING_NOT_FOUND));
-		Long resultSendingId = findResultSendingId(sendingId);
-		ResultTx resultTx = readResultTxRepository.findByUserIdAndResultSendingIdAndTxId(userId, resultSendingId, txId);
-		List<ResultTxTransferDto> resultTxTransferList = resultTxTransferRepository.findByResultTxId(resultTx.getId());
+		Map<Long, Broker> brokerMap = readBrokerRepository.findAllMap();
 
-		return ResultTxDetailDto.toDto(sendingMsg, resultTx, resultTxTransferList);
+
+		SendingMsg sendingMsg = sendingMsgRepository.findById(txId).orElseThrow(() -> new CustomException(ErrorCode.RESULT_SENDING_NOT_FOUND));
+		ResultSending resultSending = findResultSendingId(sendingId);
+		ResultTx resultTx = resultTxRepository.findByUserIdAndResultSendingIdAndTxId(userId, resultSending.getId(), txId);
+
+		List<ResultTxTransferDto> resultTxTransferList = resultTxTransferRepository.findByResultTxId(resultTx.getId());
+		resultTxTransferList.forEach(item -> item.setBrokerName(brokerMap.get(item.getBrokerId()).getName()));
+
+		String brokerName = readBrokerRepository.findById(resultTx.getBrokerId()).get().getName();
+		Long sendTime = resultTxTransferList.stream().min(Comparator.comparing(ResultTxTransferDto::getSendTime)).get().getSendTime();
+		Long completeTime = resultTxTransferList.stream().max(Comparator.comparing(ResultTxTransferDto::getCompleteTime)).get().getCompleteTime();
+
+		return ResultTxDetailDto.toDto(sendingMsg, resultTx, resultTxTransferList, sendTime, completeTime, brokerName);
 	}
 }

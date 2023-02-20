@@ -27,8 +27,8 @@ public class ResultController {
 		if(token == null)
 			throw new CustomException(ErrorCode.USER_NOT_FOUND);
 		String userId = token.getTokenAttributes().get("preferred_username").toString();
-		System.out.println(userId);
 		return(userId);
+
 	}
 
 	@GetMapping("/usage")

@@ -10,12 +10,20 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface ReadResultSendingRepository extends JpaRepository<ResultSending, Long> {
 	Optional<ResultSending> findBySendingId(Long sendingId);
+
+	List<ResultSending> findBySendingIdIn(Collection<Long> sendingIds);
+
+
+
+
+
 
 	@Query("select r from ResultSending r where r.userId = ?1")
 	List<ResultSending> findAllByUserId(String userId);
@@ -41,10 +49,10 @@ public interface ReadResultSendingRepository extends JpaRepository<ResultSending
 	@Query(value =
 			"SELECT rs.fk_sending_id as sendingId, rt.success, COUNT(rt.success) as count " +
 					"from result_sending as rs, result_tx as rt " +
-					"where rs.fk_user_id = :userId and rs.fk_sending_id In :sendingId and rs.id = rt.fk_result_sending_id " +
+					"where rs.fk_sending_id In :sendingId and rs.id = rt.fk_result_sending_id " +
 					"group by rs.fk_sending_id, rt.success "
 			, nativeQuery = true
 	)
-	List<ResultTxSuccessRateProjection> getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(@Param("userId") String userId, @Param("sendingId") List<Long> sendingId);
+	List<ResultTxSuccessRateProjection> getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(@Param("sendingId") List<Long> sendingId);
 
 }

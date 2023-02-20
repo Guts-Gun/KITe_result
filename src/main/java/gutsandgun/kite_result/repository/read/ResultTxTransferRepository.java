@@ -8,9 +8,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransfer, Long> {
+	Optional<ResultTxTransfer> findFirstByResultTxIdInOrderByCompleteTimeDesc(Collection<Long> resultTxIds);
+//	ResultTxTransfer findFirstByResultTxIdOrderByCompleteTimeDesc(Long resultTxId);
+
+
+
 	List<ResultTxTransfer> findByResultTxIdIn(List<Long> resultTxIdList);
 
 
@@ -19,14 +26,13 @@ public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransf
 					"from result_sending as rs," +
 					"     result_tx as rt, " +
 					"     result_tx_transfer as rtt " +
-					"where rs.fk_user_id = :userId " +
-					"  and rs.fk_sending_id In :sendingId " +
+					"where rs.fk_sending_id In :sendingId " +
 					"  and rs.id = rt.fk_result_sending_id" +
 					"  and rt.id = rtt.fk_result_tx_id " +
 					"group by rs.fk_sending_id"
 			, nativeQuery = true
 	)
-	List<ResultTxAvgLatencyProjection> getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(@Param("userId") String userId, @Param("sendingId") List<Long> sendingId);
+	List<ResultTxAvgLatencyProjection> getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(@Param("sendingId") List<Long> sendingId);
 
 
 	@Query(value =

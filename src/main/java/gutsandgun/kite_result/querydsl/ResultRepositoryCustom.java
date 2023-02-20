@@ -55,7 +55,7 @@ public class ResultRepositoryCustom {
                         qResultSending.success,
                         qResultSending.totalMessage,
                         qResultSending.failedMessage,
-                        qResultSending.avgLatency.longValue(),
+                        qResultSending.avgLatency.floatValue(),
                         qResultSending.inputTime,
                         qResultSending.scheduleTime,
                         qResultSending.startTime,

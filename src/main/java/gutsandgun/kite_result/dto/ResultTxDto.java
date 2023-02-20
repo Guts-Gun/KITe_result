@@ -19,7 +19,7 @@ public class ResultTxDto implements Serializable {
 	private final String userId;
 	private final Long resultSendingId;
 	private final Long txId;
-	private final Long brokerId;
+	private final String brokerName;
 	private final SendingType sendingType;
 	private final String sender;
 	private final String receiver;
@@ -34,7 +34,7 @@ public class ResultTxDto implements Serializable {
 	private final Long sendTime;
 	private final Long completeTime;
 
-	public static ResultTxDto toDto(SendingMsg sendingMsg, ResultTx resultTx) {
+	public static ResultTxDto toDto(SendingMsg sendingMsg, ResultTx resultTx, String brokerName) {
 		if(resultTx == null)
 			resultTx = new ResultTx();
 		return ResultTxDto.builder()
@@ -42,7 +42,7 @@ public class ResultTxDto implements Serializable {
 				.userId(sendingMsg.getRegId())
 				.resultSendingId(resultTx.getResultSendingId())
 				.txId(sendingMsg.getId())
-				.brokerId(resultTx.getBrokerId())
+				.brokerName(brokerName)
 				.sendingType(resultTx.getSendingType())
 				.sender(sendingMsg.getSender())
 				.receiver(sendingMsg.getReceiver())
@@ -52,7 +52,6 @@ public class ResultTxDto implements Serializable {
 				.mediaLink(resultTx.getMediaLink())
 				.content(resultTx.getContent())
 				.inputTime(resultTx.getInputTime())
-//				.completeTime(resultTx.getCompleteTime())
 				.build();
 	}
 }

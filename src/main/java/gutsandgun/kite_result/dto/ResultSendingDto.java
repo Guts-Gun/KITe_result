@@ -10,7 +10,6 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * A DTO for the {@link gutsandgun.kite_result.entity.read.ResultSending} entity
@@ -26,7 +25,7 @@ public class ResultSendingDto implements Serializable {
 	private final Boolean success;
 	private final Long totalMessage;
 	private final Long failedMessage;
-	private final Long avgLatency;
+	private final float avgLatency;
 
 	private final Long inputTime;
 	private final Long scheduleTime;
@@ -40,8 +39,8 @@ public class ResultSendingDto implements Serializable {
 
 	@QueryProjection
 	public ResultSendingDto(Long id, String userId, Long sendingId, SendingType sendingType, SendingRuleType sendingRuleType, Boolean success,
-							Long totalMessage, Long failedMessage,  Long avgLatency, Long inputTime,  Long scheduleTime,  Long startTime,
-							Long completeTime,  Long logTime, SendingStatus sendingStatus, ResultTxSuccessDto resultTxSuccessDto){
+							Long totalMessage, Long failedMessage, float avgLatency, Long inputTime, Long scheduleTime, Long startTime,
+							Long completeTime, Long logTime, SendingStatus sendingStatus, ResultTxSuccessDto resultTxSuccessDto) {
 
 		this.id = id;
 		this.userId = userId;
@@ -61,12 +60,16 @@ public class ResultSendingDto implements Serializable {
 		this.resultTxSuccessDto = resultTxSuccessDto;
 	}
 
-	public static ResultSendingDto toDto(Sending sending, ResultSending resultSending, ResultTxSuccessDto resultTxSuccessDto, Long avgLatency) {
+	public static ResultSendingDto toDto(Sending sending, ResultSending resultSending, ResultTxSuccessDto resultTxSuccessDto) {
 		if (resultTxSuccessDto == null) {
 			resultTxSuccessDto = new ResultTxSuccessDto(resultSending.getSendingId(), 0, 0);
 		}
-		if (avgLatency == null)
-			avgLatency = 0L;
+		switch (resultSending.getSendingStatus()) {
+			case PENDING, FAIL, DELAY:
+				resultSending.setAvgLatency(0F);
+				break;
+		}
+
 
 		return ResultSendingDto.builder()
 				.id(sending.getId())
@@ -77,7 +80,7 @@ public class ResultSendingDto implements Serializable {
 				.success(resultSending.getSuccess())
 				.totalMessage(sending.getTotalMessage())
 				.failedMessage(resultSending.getFailedMessage())
-				.avgLatency(avgLatency)
+				.avgLatency(resultSending.getAvgLatency())
 				.inputTime(sending.getInputTime())
 				.scheduleTime(sending.getScheduleTime())
 				.startTime(resultSending.getStartTime())

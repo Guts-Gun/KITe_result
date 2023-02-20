@@ -20,7 +20,7 @@ public class ResultTxDetailDto implements Serializable {
 	private final String userId;
 	private final Long resultSendingId;
 	private final Long txId;
-	private final Long brokerId;
+	private final String brokerName;
 	private final SendingType sendingType;
 	private final String sender;
 	private final String receiver;
@@ -37,13 +37,13 @@ public class ResultTxDetailDto implements Serializable {
 
 	private final List<ResultTxTransferDto> resultTxTransferList;
 
-	public static ResultTxDetailDto toDto(SendingMsg sendingMsg,  ResultTx resultTx, List<ResultTxTransferDto> resultTxTransferList) {
+	public static ResultTxDetailDto toDto(SendingMsg sendingMsg, ResultTx resultTx, List<ResultTxTransferDto> resultTxTransferList, Long sendTime, Long completeTime, String brokerName) {
 		return ResultTxDetailDto.builder()
 				.id(sendingMsg.getId())
 				.userId(resultTx.getUserId())
 				.resultSendingId(resultTx.getResultSendingId())
 				.txId(sendingMsg.getId())
-				.brokerId(resultTx.getBrokerId())
+				.brokerName(brokerName)
 				.sendingType(resultTx.getSendingType())
 				.sender(sendingMsg.getSender())
 				.receiver(sendingMsg.getReceiver())
@@ -52,8 +52,11 @@ public class ResultTxDetailDto implements Serializable {
 				.title(resultTx.getTitle())
 				.mediaLink(resultTx.getMediaLink())
 				.content(resultTx.getContent())
+				.sendTime(sendTime)
+				.scheduleTime(resultTx.getScheduleTime())
+				.startTime(resultTx.getStartTime())
 				.inputTime(resultTx.getInputTime())
-//				.completeTime(resultTx.getCompleteTime())
+				.completeTime(completeTime)
 				.resultTxTransferList(resultTxTransferList)
 				.build();
 	}
