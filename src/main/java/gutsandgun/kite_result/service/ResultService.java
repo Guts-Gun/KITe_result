@@ -10,6 +10,7 @@ import gutsandgun.kite_result.repository.read.*;
 import gutsandgun.kite_result.type.SendingStatus;
 import gutsandgun.kite_result.type.SendingType;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 import static java.util.Collections.singletonList;
 
 @Service
+@Slf4j
 @AllArgsConstructor
 public class ResultService {
 
@@ -220,8 +222,22 @@ public class ResultService {
 		resultTxTransferList.forEach(item -> item.setBrokerName(brokerMap.get(item.getBrokerId()).getName()));
 
 		String brokerName = readBrokerRepository.findById(resultTx.getBrokerId()).get().getName();
-		Long sendTime = resultTxTransferList.stream().min(Comparator.comparing(ResultTxTransferDto::getSendTime)).get().getSendTime();
-		Long completeTime = resultTxTransferList.stream().max(Comparator.comparing(ResultTxTransferDto::getCompleteTime)).get().getCompleteTime();
+
+		Long sendTime = 0L;
+		try {
+			sendTime = resultTxTransferList.stream().min(Comparator.comparing(ResultTxTransferDto::getSendTime)).get().getSendTime();
+		} catch (Exception e) {
+			log.info("sendingId: " + sendingId + ", txId : " + txId + ", result Transfer is missing ");
+			sendTime = 0L;
+		}
+
+		Long completeTime;
+		try {
+			completeTime = resultTxTransferList.stream().max(Comparator.comparing(ResultTxTransferDto::getCompleteTime)).get().getCompleteTime();
+		} catch (Exception e) {
+			log.info("sendingId: " + sendingId + ", txId : " + txId + ", result Transfer is missing ");
+			completeTime = 0L;
+		}
 
 		return ResultTxDetailDto.toDto(sendingMsg, resultTx, resultTxTransferList, sendTime, completeTime, brokerName);
 	}
