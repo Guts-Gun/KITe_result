@@ -63,14 +63,13 @@ public class ResultRepositoryCustom {
                         qResultSending.logTime,
                         qResultSending.sendingStatus,
                         new QResultTxSuccessDto( qResultSending.sendingId,
-                            new CaseBuilder().when(qResultTx.success.eq(true)).then(1L).otherwise(0L).sum(),
-                            new CaseBuilder().when(qResultTx.success.eq(false)).then(1L).otherwise(0L).sum()
+                            new CaseBuilder().when(qResultTx.status.eq(SendingStatus.COMPLETE)).then(1L).otherwise(0L).sum(),
+                            new CaseBuilder().when(qResultTx.status.ne(SendingStatus.COMPLETE)).then(1L).otherwise(0L).sum()
                         )
                     )
                 )
                 .from(qResultSending)
                 .leftJoin(qResultTx).on(qResultSending.sendingId.eq(qResultTx.resultSendingId))
-                .leftJoin(qResultTxTransfer).on(qResultTx.txId.eq(qResultTxTransfer.resultTxId).and(qResultTx.success.eq(qResultTxTransfer.success)))
                 .where(
                         eqUserId(userId),
                         eqSendingType(sendingType),
@@ -88,7 +87,6 @@ public class ResultRepositoryCustom {
                 .select(qResultSending.count())
                 .from(qResultSending)
                 .leftJoin(qResultTx).on(qResultSending.sendingId.eq(qResultTx.resultSendingId))
-                .leftJoin(qResultTxTransfer).on(qResultTx.txId.eq(qResultTxTransfer.resultTxId).and(qResultTx.success.eq(qResultTxTransfer.success)))
                 .where(
                         eqUserId(userId),
                         eqSendingType(sendingType),
