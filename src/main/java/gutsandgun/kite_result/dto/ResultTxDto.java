@@ -3,6 +3,7 @@ package gutsandgun.kite_result.dto;
 import gutsandgun.kite_result.entity.read.ResultTx;
 import gutsandgun.kite_result.entity.read.SendingMsg;
 import gutsandgun.kite_result.type.FailReason;
+import gutsandgun.kite_result.type.SendingStatus;
 import gutsandgun.kite_result.type.SendingType;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +24,6 @@ public class ResultTxDto implements Serializable {
 	private final SendingType sendingType;
 	private final String sender;
 	private final String receiver;
-	private final Boolean success;
 	private final FailReason failReason;
 	private final String title;
 	private final String mediaLink;
@@ -33,9 +33,10 @@ public class ResultTxDto implements Serializable {
 	private final Long startTime;
 	private final Long sendTime;
 	private final Long completeTime;
+	private final SendingStatus status;
 
 	public static ResultTxDto toDto(SendingMsg sendingMsg, ResultTx resultTx, String brokerName) {
-		if(resultTx == null)
+		if (resultTx == null)
 			resultTx = new ResultTx();
 		return ResultTxDto.builder()
 				.id(sendingMsg.getId())
@@ -46,7 +47,7 @@ public class ResultTxDto implements Serializable {
 				.sendingType(resultTx.getSendingType())
 				.sender(sendingMsg.getSender())
 				.receiver(sendingMsg.getReceiver())
-				.success(resultTx.getSuccess())
+				.status(resultTx.getStatus())
 				.failReason(resultTx.getFailReason())
 				.title(resultTx.getTitle())
 				.mediaLink(resultTx.getMediaLink())

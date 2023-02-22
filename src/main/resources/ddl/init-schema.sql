@@ -102,7 +102,7 @@ CREATE TABLE result_tx
     sending_type         INT                   NULL,
     sender               VARCHAR(255)          NULL,
     receiver             VARCHAR(255)          NULL,
-    success              BIT(1)                NULL,
+    status               INT                   NULL,
     fail_reason          INT                   NULL,
     title                VARCHAR(255)          NULL,
     media_link           VARCHAR(255)          NULL,

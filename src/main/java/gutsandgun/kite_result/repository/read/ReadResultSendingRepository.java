@@ -47,10 +47,10 @@ public interface ReadResultSendingRepository extends JpaRepository<ResultSending
 			@Param("userId") String userId);
 
 	@Query(value =
-			"SELECT rs.fk_sending_id as sendingId, rt.success, COUNT(rt.success) as count " +
+			"SELECT rs.fk_sending_id as sendingId, rt.status, COUNT(rt.status) as count " +
 					"from result_sending as rs, result_tx as rt " +
 					"where rs.fk_sending_id In :sendingId and rs.id = rt.fk_result_sending_id " +
-					"group by rs.fk_sending_id, rt.success "
+					"group by rs.fk_sending_id, rt.status "
 			, nativeQuery = true
 	)
 	List<ResultTxSuccessRateProjection> getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(@Param("sendingId") List<Long> sendingId);

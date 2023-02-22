@@ -134,7 +134,7 @@ public class ResultService {
 
 	Boolean checkSendingCompleteNotChecked(ResultSending resultSending) {
 		if (resultSending.getSendingStatus() == SendingStatus.SENDING)
-			return resultSending.getTotalMessage() == resultTxRepository.countByResultSendingIdAndSuccessNotNull(resultSending.getId());
+			return resultSending.getTotalMessage() == resultTxRepository.countByResultSendingIdAndStatusNot(resultSending.getId(), SendingStatus.PENDING);
 		else
 			return false;
 	}
@@ -202,6 +202,7 @@ public class ResultService {
 					resultSending = getCurrentSendingResultStatus(sending, resultSending);
 					resultSendingMap.put(resultSending.getSendingId(), resultSending);
 					break;
+
 			}
 		}
 
@@ -236,7 +237,11 @@ public class ResultService {
 
 		List<SendingShortInfoDto> sendingShortInfoDtoList = sendingList.stream()
 				.map(sending -> {
-					return new SendingShortInfoDto(sending, resultSendingMap.get(sending.getId()), successDtoMap.get(sending.getId()));
+//					try {
+						return new SendingShortInfoDto(sending, resultSendingMap.getOrDefault(sending.getId(),new ResultSending()), successDtoMap.getOrDefault(sending.getId(), new ResultTxSuccessDto(0L,0,0)));
+//					} catch (NullPointerException e) {
+//						return new SendingShortInfoDto(sending, resultSendingMap.get(sending.getId()), successDtoMap.get(sending.getId()));
+//					}
 				})
 				.collect(Collectors.toList());
 
@@ -326,7 +331,7 @@ public class ResultService {
 				brokerSuccessFailCounts.add(tempCnt.getOrDefault(Boolean.FALSE, 0L));
 			}
 		} catch (NullPointerException e) {
-			System.out.println("resultTxTransferList Missing Sending id : " + sendingId);
+			System.out.println("resultTxTransferList Missing Can't get Broker S/F Cnt Sending id : " + sendingId);
 		}
 
 		NameDateListDto brokerSuccessFailDto = new NameDateListDto(brokerNames, brokerColors, brokerSuccessFailCounts);

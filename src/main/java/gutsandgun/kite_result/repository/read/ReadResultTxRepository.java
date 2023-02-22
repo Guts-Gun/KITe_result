@@ -2,6 +2,7 @@ package gutsandgun.kite_result.repository.read;
 
 import gutsandgun.kite_result.projection.ResultTxSuccessRateProjection;
 import gutsandgun.kite_result.entity.read.ResultTx;
+import gutsandgun.kite_result.type.SendingStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,24 +15,27 @@ import java.util.List;
 
 @Repository
 public interface ReadResultTxRepository extends JpaRepository<ResultTx, Long> {
-	long countByResultSendingIdAndSuccessFalse(Long resultSendingId);
-	long countBySuccessFalse();
-	long countByResultSendingIdAndSuccessNotNull(Long resultSendingId);
+//	long countByResultSendingIdAndSuccessFalse(Long resultSendingId);
+//	long countBySuccessFalse();
+//	long countByResultSendingIdAndSuccessNotNull(Long resultSendingId);
+
+	long countByResultSendingIdAndStatusNot(Long resultSendingId, SendingStatus status);
+
 
 	@Query(value =
-			"SELECT rs.fk_sending_id as sendingId, rt.success, COUNT(rt.success) as count " +
+			"SELECT rs.fk_sending_id as sendingId, rt.status, COUNT(rt.status) as count " +
 					"from result_sending as rs, result_tx as rt " +
 					"where rs.fk_user_id = :userId and rs.id = rt.fk_result_sending_id " +
-					"group by rs.fk_sending_id, rt.success "
+					"group by rs.fk_sending_id, rt.status "
 			, nativeQuery = true
 	)
 	List<ResultTxSuccessRateProjection> getTxSuccessCountGroupByResultSendingByUserId(@Param("userId") String userId);
 
 	@Query(value =
-			"SELECT rs.fk_sending_id as sendingId, rt.success, COUNT(rt.success) as count " +
+			"SELECT rs.fk_sending_id as sendingId, rt.status, COUNT(rt.status) as count " +
 					"from result_sending as rs, result_tx as rt " +
 					"where rs.fk_user_id = :userId and rs.fk_sending_id In :sendingId and rs.id = rt.fk_result_sending_id " +
-					"group by rs.fk_sending_id, rt.success "
+					"group by rs.fk_sending_id, rt.status "
 			, nativeQuery = true
 	)
 	List<ResultTxSuccessRateProjection> getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(@Param("userId") String userId, @Param("sendingId") List<Long> sendingId);
