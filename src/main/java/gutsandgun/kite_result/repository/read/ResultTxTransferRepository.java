@@ -63,5 +63,8 @@ public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransf
 
 	List<ResultTxTransferDto> findByResultTxId(Long txId);
 
+	List<ResultTxTransferDto> findByResultTxIdOrderByCompleteTimeDesc(Long resultTxId);
+
+
 
 }

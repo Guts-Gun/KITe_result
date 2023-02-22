@@ -15,11 +15,9 @@ import java.util.List;
 
 @Repository
 public interface ReadResultTxRepository extends JpaRepository<ResultTx, Long> {
-//	long countByResultSendingIdAndSuccessFalse(Long resultSendingId);
-//	long countBySuccessFalse();
-//	long countByResultSendingIdAndSuccessNotNull(Long resultSendingId);
 
-	long countByResultSendingIdAndStatusNot(Long resultSendingId, SendingStatus status);
+
+	long countByResultSendingIdAndStatusIn(Long resultSendingId, Collection<SendingStatus> statuses);
 
 
 	@Query(value =

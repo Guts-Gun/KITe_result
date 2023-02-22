@@ -58,6 +58,7 @@ public class ResultService {
 		if (totalUsageDtoList.size() == 0) {
 			totalUsageDtoList.add(new TotalUsageDto(SendingType.SMS, 0L, getUsageCap(userId)));
 		}
+		totalUsageDtoList.add(new TotalUsageDto(SendingType.MMS, 0L, getUsageCap(userId)));
 
 		return totalUsageDtoList;
 	}
@@ -65,7 +66,7 @@ public class ResultService {
 
 	public List<SendingShortInfoDto> getTotalSendingShortInfo(String userId) {
 
-		List<Sending> sendingList = readSendingRepository.findByUserId(userId);
+		List<Sending> sendingList = readSendingRepository.findByUserIdOrderByInputTimeDesc(userId);
 		if (sendingList.size() == 0)
 			return new ArrayList<>();
 
@@ -215,7 +216,7 @@ public class ResultService {
 		ResultSending resultSending = findResultSendingId(sendingId);
 		ResultTx resultTx = resultTxRepository.findByUserIdAndResultSendingIdAndTxId(userId, resultSending.getId(), txId);
 
-		List<ResultTxTransferDto> resultTxTransferList = resultTxTransferRepository.findByResultTxId(resultTx.getId());
+		List<ResultTxTransferDto> resultTxTransferList = resultTxTransferRepository.findByResultTxIdOrderByCompleteTimeDesc(resultTx.getId());
 		resultTxTransferList.forEach(item -> item.setBrokerName(brokerMap.get(item.getBrokerId()).getName()));
 
 		String brokerName = readBrokerRepository.findById(resultTx.getBrokerId()).get().getName();

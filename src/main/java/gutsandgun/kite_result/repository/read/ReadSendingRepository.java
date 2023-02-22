@@ -14,5 +14,7 @@ public interface ReadSendingRepository extends JpaRepository<Sending, Long> {
 	Optional<Sending> findByIdAndUserId(Long id, String userId);
 	List<Sending> findByUserId(String userId);
 
+	List<Sending> findByUserIdOrderByInputTimeDesc(String userId);
+
 
 }

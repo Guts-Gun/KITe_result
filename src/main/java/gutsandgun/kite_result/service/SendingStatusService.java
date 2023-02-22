@@ -15,9 +15,7 @@ import gutsandgun.kite_result.type.SendingStatus;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,17 +37,6 @@ public class SendingStatusService {
 				resultSendingRepository.getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(sendingIdList)
 						.stream()
 						.collect(Collectors.groupingBy(ResultTxSuccessRateProjection::getSendingId));
-
-		for (Long key : successCountProjectionMap.keySet()) {
-			System.out.println(key.toString());
-			System.out.println(successCountProjectionMap.get(key).toString());
-			for (ResultTxSuccessRateProjection item : successCountProjectionMap.get(key)) {
-				System.out.println(item.getSendingId());
-				System.out.println(SendingStatus.values()[item.getStatus()]);
-				System.out.println(item.getCount());
-			}
-		}
-
 
 		Map<Long, ResultTxSuccessDto> successDtoMap = sendingIdList
 				.stream()
@@ -122,15 +109,18 @@ public class SendingStatusService {
 
 
 	Boolean checkSendingCompleteNotChecked(ResultSending resultSending) {
-		if (resultSending.getSendingStatus() == SendingStatus.SENDING)
-			return resultSending.getTotalMessage() == resultTxRepository.countByResultSendingIdAndStatusNot(resultSending.getId(), SendingStatus.PENDING);
-		else
+		List<SendingStatus> sendingStatusList = Arrays.asList(SendingStatus.COMPLETE, SendingStatus.FAIL);
+		if (resultSending.getSendingStatus() == SendingStatus.SENDING) {
+			return resultSending.getTotalMessage() == resultTxRepository.countByResultSendingIdAndStatusIn(resultSending.getId(), sendingStatusList);
+		} else
 			return false;
 	}
 
 	ResultSending getCurrentSendingResultStatus(Sending sending, ResultSending resultSending) {
 
 		System.out.println("check sending id : " + sending.getId());
+		boolean completeFlag = checkSendingCompleteNotChecked(resultSending);
+
 		List<ResultTx> resultTxList = resultTxRepository.findByResultSendingId(resultSending.getId());
 		List<Long> resultTxIdList = resultTxList.stream().map(ResultTx::getId).collect(Collectors.toList());
 
@@ -138,7 +128,7 @@ public class SendingStatusService {
 		resultSending.setFailedMessage(failCnt);
 
 
-		if (failCnt == resultSending.getTotalMessage()) {
+		if (Objects.equals(failCnt, resultSending.getTotalMessage())) {
 			resultSending.setSuccess(Boolean.FALSE);
 			resultSending.setSendingStatus(SendingStatus.FAIL);
 		} else {
@@ -158,8 +148,12 @@ public class SendingStatusService {
 		resultSending.setCompleteTime(completeTime);
 
 
-		if (checkSendingCompleteNotChecked(resultSending)) {
-			resultSending.setSendingStatus(SendingStatus.COMPLETE);
+		if (completeFlag) {
+			if (resultSending.getSuccess())
+				resultSending.setSendingStatus(SendingStatus.COMPLETE);
+			else
+				resultSending.setSendingStatus(SendingStatus.FAIL);
+
 			rabbitMQProducer.logSendQueue("Service: Result, type: " + resultSending.getSendingStatus().toString().toUpperCase() + ", resultSendingId: " + resultSending.getId() + ", success: " + resultSending.getSuccess().toString() + ", failedMessage: " + resultSending.getFailedMessage() + ", avgLatency: " + resultSending.getAvgLatency() + ", completeTime: " + resultSending.getCompleteTime() + ", time: " + new Date().getTime() + "@");
 			System.out.println("Service: Result, type: " + resultSending.getSendingStatus().toString().toUpperCase() + ", resultSendingId: " + resultSending.getId() + ", success: " + resultSending.getSuccess().toString() + ", failedMessage: " + resultSending.getFailedMessage() + ", avgLatency: " + resultSending.getAvgLatency() + ", completeTime: " + resultSending.getCompleteTime() + ", time: " + new Date().getTime() + "@");
 		}
