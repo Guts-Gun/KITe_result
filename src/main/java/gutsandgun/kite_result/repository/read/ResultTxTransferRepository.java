@@ -13,6 +13,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ResultTxTransferRepository extends JpaRepository<ResultTxTransfer, Long> {
+	/**
+	 *  tx 마지막 전송시간 찾기
+	 * @param resultTxIds
+	 * @return
+	 */
 	Optional<ResultTxTransfer> findFirstByResultTxIdInOrderByCompleteTimeDesc(Collection<Long> resultTxIds);
 //	ResultTxTransfer findFirstByResultTxIdOrderByCompleteTimeDesc(Long resultTxId);
 

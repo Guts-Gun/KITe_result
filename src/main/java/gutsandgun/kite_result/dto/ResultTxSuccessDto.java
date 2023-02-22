@@ -2,12 +2,10 @@ package gutsandgun.kite_result.dto;
 
 import com.querydsl.core.annotations.QueryProjection;
 import gutsandgun.kite_result.projection.ResultTxSuccessRateProjection;
+import gutsandgun.kite_result.type.SendingStatus;
 import lombok.Getter;
 
 import java.util.List;
-
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
 
 @Getter
 public class ResultTxSuccessDto {
@@ -27,14 +25,14 @@ public class ResultTxSuccessDto {
 
 	public ResultTxSuccessDto(Long sendingId, List<ResultTxSuccessRateProjection> resultTxSuccessRateProjections) {
 		this.sendingId = sendingId;
-		if (resultTxSuccessRateProjections == null){
+		if (resultTxSuccessRateProjections == null) {
 			return;
 		}
 
 		for (ResultTxSuccessRateProjection resultTxSuccessRateProjection : resultTxSuccessRateProjections) {
-			if (resultTxSuccessRateProjection.getSuccess() == TRUE) {
+			if (SendingStatus.values()[resultTxSuccessRateProjection.getStatus()] == SendingStatus.COMPLETE) {
 				this.successCnt = resultTxSuccessRateProjection.getCount();
-			} else if (resultTxSuccessRateProjection.getSuccess() == FALSE) {
+			} else if (SendingStatus.values()[resultTxSuccessRateProjection.getStatus()] == SendingStatus.FAIL) {
 				this.failCnt = resultTxSuccessRateProjection.getCount();
 			}
 		}

@@ -4,10 +4,7 @@ import gutsandgun.kite_result.dto.*;
 import gutsandgun.kite_result.entity.read.*;
 import gutsandgun.kite_result.exception.CustomException;
 import gutsandgun.kite_result.exception.ErrorCode;
-import gutsandgun.kite_result.projection.ResultTxAvgLatencyProjection;
-import gutsandgun.kite_result.projection.ResultTxSuccessRateProjection;
 import gutsandgun.kite_result.projection.ResultTxTransferStatsProjection;
-import gutsandgun.kite_result.publisher.RabbitMQProducer;
 import gutsandgun.kite_result.querydsl.ResultRepositoryCustom;
 import gutsandgun.kite_result.repository.read.*;
 import gutsandgun.kite_result.type.SendingStatus;
@@ -20,7 +17,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -29,7 +29,7 @@ import static java.util.Collections.singletonList;
 @Service
 @AllArgsConstructor
 public class ResultService {
-	private final RabbitMQProducer rabbitMQProducer;
+
 	private final ReadSendingRepository readSendingRepository;
 	private final ReadResultSendingRepository resultSendingRepository;
 	private final ReadResultTxRepository resultTxRepository;
@@ -39,175 +39,14 @@ public class ResultService {
 
 	private final ResultRepositoryCustom resultRepositoryCustom;
 
+	private final SendingStatusService sendingStatusService;
+
 	Long getUsageCap(String userId) {
 		return 100L;
 	}
 
 	ResultSending findResultSendingId(Long sendingId) {
 		return resultSendingRepository.findBySendingId(sendingId).orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND));
-	}
-
-	Map<Long, ResultTxSuccessDto> getSuccessCntMap(List<Long> sendingId) {
-
-		Map<Long, List<ResultTxSuccessRateProjection>> successCountProjectionMap =
-				resultSendingRepository.getTxSuccessCountGroupByResultSendingByUserIdAndSendingId(sendingId)
-						.stream()
-						.collect(Collectors.groupingBy(ResultTxSuccessRateProjection::getSendingId));
-
-		Map<Long, ResultTxSuccessDto> successDtoMap = sendingId
-				.stream()
-				.collect(Collectors.toMap(key -> key, key -> {
-					if (successCountProjectionMap.containsKey(key))
-						return new ResultTxSuccessDto(key, successCountProjectionMap.get(key));
-					else
-						return new ResultTxSuccessDto(key, 0, 0);
-				}));
-		return successDtoMap;
-	}
-
-//	Map<Long, Long> getLatencyAvgMap(List<Long> sendingIds) {
-//		List<ResultTxAvgLatencyProjection> latencyProjections = resultTxTransferRepository.getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(sendingIds);
-//
-//		return latencyProjections.stream()
-//				.collect(Collectors.toMap(
-//						ResultTxAvgLatencyProjection::getSendingId,
-//						projection -> Optional.ofNullable(projection.getAvgLatency()).orElse(0L)
-//				));
-//	}
-
-
-	// 나중에 이거로 바꿔두기
-	Map<Long, Long> getLatencyAvgMap(List<Long> sendingId) {
-
-		Map<Long, Long> txLatencyAvgProjectionMap
-				= resultTxTransferRepository.getTxAvgLatencyGroupByResultSendingByUserIdAndSendingId(sendingId)
-				.stream()
-				.collect(Collectors.toMap(ResultTxAvgLatencyProjection::getSendingId,
-						resultTxAvgLatencyProjection -> {
-							if (resultTxAvgLatencyProjection.getAvgLatency() != null)
-								return resultTxAvgLatencyProjection.getAvgLatency();
-							else
-								return 0L;
-						}));
-
-		Map<Long, Long> txLatencyAvgMap = sendingId
-				.stream()
-				.collect(Collectors.toMap(key -> key, key ->
-				{
-					if (txLatencyAvgProjectionMap.containsKey(key))
-						return txLatencyAvgProjectionMap.get(key);
-					else
-						return 0L;
-				}));
-
-
-		return txLatencyAvgMap;
-	}
-
-	Map<Long, Long> getQueLatencyAvgMap(List<Long> sendingId) {
-
-		Map<Long, Long> txLatencyAvgProjectionMap
-				= resultTxTransferRepository.getTxAvgLatencyBtwStartAndQueGroupByResultSendingByUserIdAndSendingId(sendingId)
-				.stream()
-				.collect(Collectors.toMap(ResultTxAvgLatencyProjection::getSendingId,
-						resultTxAvgLatencyProjection -> {
-							if (resultTxAvgLatencyProjection.getAvgLatency() != null)
-								return resultTxAvgLatencyProjection.getAvgLatency();
-							else
-								return 0L;
-						}));
-
-		Map<Long, Long> txLatencyAvgMap = sendingId
-				.stream()
-				.collect(Collectors.toMap(key -> key, key ->
-				{
-					if (txLatencyAvgProjectionMap.containsKey(key))
-						return txLatencyAvgProjectionMap.get(key);
-					else
-						return 0L;
-				}));
-
-
-		return txLatencyAvgMap;
-	}
-
-
-	Boolean checkSendingCompleteNotChecked(ResultSending resultSending) {
-		if (resultSending.getSendingStatus() == SendingStatus.SENDING)
-			return resultSending.getTotalMessage() == resultTxRepository.countByResultSendingIdAndStatusNot(resultSending.getId(), SendingStatus.PENDING);
-		else
-			return false;
-	}
-
-	ResultSending getCurrentSendingResultStatus(Sending sending, ResultSending resultSending) {
-//		ResultSending resultSending = findResultSendingId(sending.getId());
-		System.out.println("check sending id : " + sending.getId());
-		List<Long> resultTxIdList = resultTxRepository.findByResultSendingId(resultSending.getId()).stream().map(ResultTx::getId).collect(Collectors.toList());
-
-		Long failCnt = getSuccessCntMap(singletonList(sending.getId())).get(sending.getId()).getFailCnt();
-		resultSending.setFailedMessage(failCnt);
-
-
-		if (failCnt == resultSending.getTotalMessage()) {
-			resultSending.setSuccess(Boolean.FALSE);
-			resultSending.setSendingStatus(SendingStatus.FAIL);
-		} else {
-			resultSending.setSuccess(Boolean.TRUE);
-		}
-//		Long avgLatency = getLatencyAvgMap(singletonList(sending.getId())).get(sending.getId());
-		Long avgLatency = getQueLatencyAvgMap(singletonList(sending.getId())).get(sending.getId());
-		resultSending.setAvgLatency(Float.valueOf(avgLatency));
-
-		//여기 하기
-//		long completeTime = resultTxTransferRepository.findFirstByResultTxIdInOrderByCompleteTimeDesc(resultTxIdList)
-//				.orElseGet(() -> {
-//					ResultTxTransfer resultTxTransfer = new ResultTxTransfer();
-//					resultTxTransfer.setCompleteTime(0L);
-//					return resultTxTransfer;
-//				}).getCompleteTime();
-//
-//		resultSending.setCompleteTime(completeTime);
-		long completeTime = resultTxTransferRepository.findFirstByResultTxIdInOrderByCompleteTimeDesc(resultTxIdList)
-				.map(ResultTxTransfer::getCompleteTime)
-				.orElse(0L);
-
-		resultSending.setCompleteTime(completeTime);
-
-
-		if (checkSendingCompleteNotChecked(resultSending)) {
-			resultSending.setSendingStatus(SendingStatus.COMPLETE);
-			rabbitMQProducer.logSendQueue("Service: Result, type: " + resultSending.getSendingStatus().toString().toUpperCase() + ", resultSendingId: " + resultSending.getId() + ", success: " + resultSending.getSuccess().toString() + ", failedMessage: " + resultSending.getFailedMessage() + ", avgLatency: " + resultSending.getAvgLatency() + ", completeTime: " + resultSending.getCompleteTime() + ", time: " + new Date().getTime() + "@");
-//			System.out.println("Service: Result, type: " + resultSending.getSendingStatus().toString().toUpperCase() + ", resultSendingId: " + resultSending.getId() + ", success: " + resultSending.getSuccess().toString() + ", failedMessage: " + resultSending.getFailedMessage() + ", avgLatency: " + resultSending.getAvgLatency() + ", completeTime: " + resultSending.getCompleteTime() + ", time: " + new Date().getTime() + "@");
-		}
-
-		return resultSending;
-	}
-
-	//result 조회할때 한번씩 체크하도록 반영하기
-	public Map<Long, ResultSending> findResultSendingInSendingIdList(List<Sending> sendingList) {
-
-		Map<Long, ResultSending> resultSendingMap = resultSendingRepository.findBySendingIdIn(sendingList.stream().map(Sending::getId).collect(Collectors.toList()))
-				.stream()
-				.collect(Collectors.toMap(ResultSending::getSendingId, Function.identity(), (p1, p2) -> p1));
-
-		for (Sending sending : sendingList) {
-			ResultSending resultSending = resultSendingMap.get(sending.getId());
-
-			if (resultSending == null)
-				resultSending = new ResultSending();
-			switch (resultSending.getSendingStatus()) {
-				case COMPLETE, PENDING, FAIL, DELAY:
-					break;
-				case SENDING:
-					resultSending = getCurrentSendingResultStatus(sending, resultSending);
-					resultSendingMap.put(resultSending.getSendingId(), resultSending);
-					break;
-
-			}
-		}
-
-
-		return resultSendingMap;
 	}
 
 	public List<TotalUsageDto> getTotalUsage(String userId) {
@@ -230,15 +69,15 @@ public class ResultService {
 		if (sendingList.size() == 0)
 			return new ArrayList<>();
 
-		Map<Long, ResultSending> resultSendingMap = findResultSendingInSendingIdList(sendingList);
+		Map<Long, ResultSending> resultSendingMap = sendingStatusService.findResultSendingInSendingIdList(sendingList);
 
-		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(sendingList.stream().map(Sending::getId).toList());
+		Map<Long, ResultTxSuccessDto> successDtoMap = sendingStatusService.getSuccessCntMap(sendingList.stream().map(Sending::getId).toList());
 
 
 		List<SendingShortInfoDto> sendingShortInfoDtoList = sendingList.stream()
 				.map(sending -> {
 //					try {
-						return new SendingShortInfoDto(sending, resultSendingMap.getOrDefault(sending.getId(),new ResultSending()), successDtoMap.getOrDefault(sending.getId(), new ResultTxSuccessDto(0L,0,0)));
+					return new SendingShortInfoDto(sending, resultSendingMap.getOrDefault(sending.getId(), new ResultSending()), successDtoMap.getOrDefault(sending.getId(), new ResultTxSuccessDto(0L, 0, 0)));
 //					} catch (NullPointerException e) {
 //						return new SendingShortInfoDto(sending, resultSendingMap.get(sending.getId()), successDtoMap.get(sending.getId()));
 //					}
@@ -256,9 +95,9 @@ public class ResultService {
 		Map<Long, Sending> sendingMap = readSendingRepository.findByUserIdAndIdIn(userId, resultSendingPage.getContent().stream().map(ResultSending::getSendingId).collect(Collectors.toList()))
 				.stream()
 				.collect(Collectors.toMap(Sending::getId, Function.identity()));
-		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(resultSendingPage.stream().map(ResultSending::getSendingId).toList());
+		Map<Long, ResultTxSuccessDto> successDtoMap = sendingStatusService.getSuccessCntMap(resultSendingPage.stream().map(ResultSending::getSendingId).toList());
 
-		Map<Long, Long> txLatencyAvgMap = getLatencyAvgMap(resultSendingPage.stream().map(ResultSending::getSendingId).toList());
+		Map<Long, Long> txLatencyAvgMap = sendingStatusService.getLatencyAvgMap(resultSendingPage.stream().map(ResultSending::getSendingId).toList());
 
 		Page<ResultSendingDto> resultSendingDtoList = resultSendingPage.map(resultSending -> ResultSendingDto.toDto(sendingMap.get(resultSending.getSendingId()), resultSending, successDtoMap.get(resultSending.getSendingId())));
 		System.out.println(resultSendingDtoList);
@@ -269,11 +108,11 @@ public class ResultService {
 	public ResultSendingDto getResultSending(String userId, Long sendingId) {
 		//없을때 에러 어케 처리할지 정하기
 		Sending sending = readSendingRepository.findByIdAndUserId(sendingId, userId).orElseThrow(() -> new CustomException(ErrorCode.SENDING_NOT_FOUND));
-		ResultSending resultSending = findResultSendingInSendingIdList(singletonList(sending)).get(sending.getId());
+		ResultSending resultSending = sendingStatusService.findResultSendingInSendingIdList(singletonList(sending)).get(sending.getId());
 //				.orElseThrow( /*new CustomException(ErrorCode.RESULT_SENDING_NOT_FOUND*/);
 
 
-		Map<Long, ResultTxSuccessDto> successDtoMap = getSuccessCntMap(singletonList(resultSending.getSendingId()));
+		Map<Long, ResultTxSuccessDto> successDtoMap = sendingStatusService.getSuccessCntMap(singletonList(resultSending.getSendingId()));
 
 
 		ResultSendingDto resultSendingDto = ResultSendingDto.toDto(sending, resultSending, successDtoMap.get(resultSending.getSendingId()));
